@@ -435,7 +435,20 @@
 (defglfwcallback key :void ((window :pointer) (key key) (scan-code :int) (action key-state) (modifiers modifier)))
 (defglfwcallback char :void ((window :pointer) (code-point :uint)))
 (defglfwcallback char-modifiers :void ((window :pointer) (code-point :uint) (modifiers modifier)))
-(defglfwcallback drop :void ((window :pointer) (path-count :int) (paths :pointer)))
+
+(defgeneric drop (window paths))
+(cffi:defcallback drop :void ((window :pointer) (path-count :int) (paths :pointer))
+  (restart-case (let ((window-ptr window) (window (resolve-window window)))
+                  (if window
+                      ;; Special handling to decode the paths
+                      (drop window (loop for i from 0 below path-count
+                                         collect (cffi:foreign-string-to-lisp (cffi:mem-aref paths :pointer i) :encoding :utf-8)))
+                      (format *error-output*
+                              "~&[GLFW] ~a callback to unmapped window pointer ~8,'0x, ignoring.~%"
+                              'drop (cffi-sys:pointer-address window-ptr))))
+    (abort ()
+      :report "Abort the callback."
+      NIL)))
 
 ;;; Main interface
 (defun translate-name (name)
@@ -460,7 +473,7 @@
 (defglfwfun "glfwInitVulkanLoader" :void ((loader :pointer)))
 (defglfwfun "glfwGetVersion" :void ((major :pointer) (minor :pointer) (rev :pointer)))
 (defglfwfun "glfwGetVersionString" :string ())
-(defglfwfun "glfwGetError" :int ((description :pointer)))
+(defglfwfun "glfwGetError" error ((description :pointer)))
 (defglfwfun "glfwGetPlatform" :int ())
 (defglfwfun "glfwPlatformSupported" :bool ((platform flag)))
 (defglfwfun "glfwGetMonitors" :pointer ((count :pointer)))
