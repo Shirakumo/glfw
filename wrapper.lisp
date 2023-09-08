@@ -159,9 +159,15 @@
       ramps)))
 
 (defclass window ()
-  ((pointer :initform NIL :accessor pointer)))
+  ((pointer :initform NIL :accessor pointer)
+   (width :initarg :width :initform 800 :reader width)
+   (height :initarg :height :initform 600 :reader height)
+   (aspect-ratio :initform NIL :accessor aspect-ratio)
+   (size-limits :initform (list -1 -1 -1 -1) :accessor size-limits)
+   (swap-interval :initform 0 :accessor swap-interval)
+   (title :initarg :title :initform "GLFW" :accessor title)))
 
-(defmethod initialize-instance :after ((window window) &rest args &key width height title monitor share)
+(defmethod initialize-instance :after ((window window) &rest args &key monitor share)
   (init)
   (loop for (k v) on args by #'cddr
         unless (find k '(:width :height :title :monitor :share))
@@ -169,9 +175,9 @@
                (glfw window-hint-string k v)
                (glfw window-hint k v)))
   (let ((pointer (glfw create-window
-                       (or width 800)
-                       (or height 600)
-                       (or title "GLFW")
+                       (width window)
+                       (height window)
+                       (title window)
                        (or monitor (cffi:null-pointer))
                        (or share (cffi:null-pointer))))
         ok)
@@ -221,10 +227,15 @@
 (defmethod glfw:deallocate (ptr size (window window))
   (cffi:foreign-funcall "free" :pointer ptr :void))
 
-(defmethod glfw:window-position ((window window) xpos ypos))
-(defmethod glfw:window-size ((window window) width height))
+(defmethod glfw:window-size :before ((window window) width height)
+  (setf (slot-value window 'width) width)
+  (setf (slot-value window 'height) height))
+
 (defmethod glfw:window-close ((window window))
   (glfw:set-window-should-close (pointer window) T))
+
+(defmethod glfw:window-position ((window window) xpos ypos))
+(defmethod glfw:window-size ((window window) width height))
 (defmethod glfw:window-refresh ((window window)))
 (defmethod glfw:window-focus ((window window) focused))
 (defmethod glfw:window-iconify ((window window) iconified))
@@ -239,3 +250,172 @@
 (defmethod glfw:char ((window window) code-point))
 (defmethod glfw:char-modifiers ((window window) code-point modifiers))
 (defmethod glfw:drop ((window window) path-count paths))
+
+(defmethod should-close-p ((window window))
+  (glfw:window-should-close (pointer window)))
+
+(defmethod (setf should-close-p) (bool (window window))
+  (glfw:set-window-should-close (pointer window) bool))
+
+(defmethod (setf title) :before (title (window window))
+  (glfw set-window-title (pointer window) title))
+
+(defmethod location ((window window))
+  (extract-values ((x :int) (y :int))
+    (glfw get-window-pos (pointer window) x y)))
+
+(defmethod (setf location) (pos (window window))
+  (destructuring-bind (x y) pos
+    (glfw set-window-pos (pointer window) (round x) (round y))
+    pos))
+
+(defmethod size ((window window))
+  (cons (width window) (height window)))
+
+(defmethod (setf size) (size (window window))
+  (destructuring-bind (w h) size
+    (glfw set-window-size (pointer window) w h)
+    (setf (slot-value window 'width) w)
+    (setf (slot-value window 'height) h)
+    size))
+
+(defmethod (setf width) (size (window window))
+  (setf (size window) (list size (height window)))
+  size)
+
+(defmethod (setf height) (size (window window))
+  (setf (size window) (list (width window) size))
+  size)
+
+(defmethod (setf size-limits) :before (size (window window))
+  (destructuring-bind (min-w min-h max-w max-h) size
+    (glfw set-window-size-limits (pointer window) (or min-w -1) (or min-h -1) (or max-w -1) (or max-h -1))))
+
+(defmethod (setf aspect-ratio) :before (ratio (window window))
+  (glfw set-window-aspect-ratio (pointer window) (numerator ratio) (denominator ratio)))
+
+(defmethod (setf aspect-ratio) :before ((none null) (window window))
+  (glfw set-window-aspect-ratio (pointer window) -1 -1))
+
+(defmethod framebuffer-size ((window window))
+  (extract-values ((w :int) (h :int))
+    (glfw get-framebuffer-size (pointer window) w h)))
+
+(defmethod frame-size ((window window))
+  (extract-values ((l :int) (u :int) (r :int) (b :int))
+    (glfw get-window-frame-size (pointer window) l u r b)))
+
+(defmethod content-scale ((window window))
+  (extract-values ((x :float) (y :float))
+    (glfw get-window-content-scale (pointer window) x y)))
+
+(defmethod opacity ((window window))
+  (glfw get-window-opacity (pointer window)))
+
+(defmethod (setf opacity) (value (window window))
+  (glfw set-window-opacity (pointer window) (float value 0f0))
+  value)
+
+(defmethod iconify ((window window))
+  (glfw iconify-window (pointer window))
+  window)
+
+(defmethod restore ((window window))
+  (glfw restore-window (pointer window))
+  window)
+
+(defmethod maximize ((window window))
+  (glfw maximize-window (pointer window))
+  window)
+
+(defmethod show ((window window))
+  (glfw show-window (pointer window))
+  window)
+
+(defmethod hide ((window window))
+  (glfw hide-window (pointer window))
+  window)
+
+(defmethod focus ((window window))
+  (glfw focus-window (pointer window))
+  window)
+
+(defmethod request-attention ((window window))
+  (glfw request-window-attention (pointer window))
+  window)
+
+(defmethod monitor ((window window))
+  (ptr-object (glfw get-window-monitor (pointer window))))
+
+(defmethod (setf monitor) ((monitor monitor) (window window))
+  (glfw set-window-monitor (pointer window) (pointer monitor))
+  monitor)
+
+(defmethod (setf monitor) ((default (eql T)) (window window))
+  (setf (monitor window) (primary-monitor)))
+
+(defmethod attribute (attribute (window window))
+  (glfw get-window-attrib (pointer window) attribute))
+
+(defmethod (setf attribute) (value attribute (window window))
+  (glfw set-window-attrib (pointer window) attribute value)
+  value)
+
+(defmethod input-mode (mode (window window))
+  (glfw get-input-mode (pointer window) mode))
+
+(defmethod (setf input-mode) (value mode (window window))
+  (glfw set-input-mode (pointer window) mode value)
+  value)
+
+(defun poll-events (&key (timeout NIL))
+  (etypecase timeout
+    (null (glfw poll-events))
+    ((eql T) (glfw wait-events))
+    (real (glfw wait-events-timeout (float timeout 0d0)))))
+
+(defmethod key-state (key (window window))
+  (glfw get-key (pointer window) key))
+
+(defmethod mouse-button-state (button (window window))
+  (glfw get-mouse-button (pointer window) button))
+
+(defmethod cursor-location ((window window))
+  (extract-values ((x :double) (y :double))
+    (glfw get-cursor-pos (pointer window) x y)))
+
+(defmethod (setf cursor-location) (pos (window window))
+  (destructuring-bind (x y) pos
+    (glfw set-cursor-pos (pointer window) (float x 0d0) (float y 0d0))))
+
+(defmethod clipboard-string ((window window))
+  (glfw get-clipboard-string (pointer window)))
+
+(defmethod (setf clipboard-string) (string (window window))
+  (glfw set-clipboard-string (pointer window) string)
+  string)
+
+(defun time ()
+  (glfw:get-time))
+
+(defun (setf time) (time)
+  (glfw:set-time (float time 0d0))
+  time)
+
+(defun timestamp ()
+  (glfw:get-timer-value))
+
+(defun timestamp-resolution ()
+  (glfw:get-timer-frequency))
+
+(defmethod make-current ((window window))
+  (glfw make-context-current (pointer window)))
+
+(defmethod get-current ()
+  (ptr-object (glfw get-current-context)))
+
+(defmethod swap-buffers ((window window))
+  (glfw swap-buffers (pointer window)))
+
+(defmethod (setf swap-interval) :before (interval (window window))
+  (glfw swap-interval interval))

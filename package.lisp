@@ -219,6 +219,7 @@
   (:use #:cl)
   (:local-nicknames
    (#:glfw #:org.shirakumo.fraf.glfw.cffi))
+  (:shadow #:time)
   (:export
    #:init
    #:shutdown))
