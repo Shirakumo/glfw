@@ -343,7 +343,7 @@
   (:connected              #x00040001)
   (:disconnected           #x00040002))
 
-(cffi:defcstruct video-mode
+(cffi:defcstruct (video-mode :conc-name video-mode-)
   (width :int)
   (height :int)
   (red-bits :int)
@@ -351,22 +351,22 @@
   (blue-bits :int)
   (refresh-rate :int))
 
-(cffi:defcstruct gamma-ramp
+(cffi:defcstruct (gamma-ramp :conc-name gamma-ramp-)
   (red :pointer)
   (green :pointer)
   (blue :pointer)
   (size :uint))
 
-(cffi:defcstruct image
+(cffi:defcstruct (image :conc-name image-)
   (width :int)
   (height :int)
   (pixels :pointer))
 
-(cffi:defcstruct gamepad-state
+(cffi:defcstruct (gamepad-state :conc-name gamepad-state-)
   (buttons :uchar :count 15)
   (axes :float :count 6))
 
-(cffi:defcstruct allocator
+(cffi:defcstruct (allocator :conc-name allocator-)
   (allocate :pointer)
   (reallocate :pointer)
   (deallocate :pointer)
@@ -395,10 +395,10 @@
               (:pointer '(cffi:null-pointer))
               (T 0)))))))
 
-(defun error-report (code description))
+(defun error (code description))
 
 (cffi:defcallback error :void ((code :int) (description :string))
-  (error-report code description))
+  (error code description))
 
 (defun monitor-connected (id))
 (defun monitor-disconnected (id))
@@ -438,8 +438,20 @@
 (defglfwcallback drop :void ((window :pointer) (path-count :int) (paths :pointer)))
 
 ;;; Main interface
+(defun translate-name (name)
+  (with-output-to-string (out)
+    (loop with was-uppercase = T
+          for char across name
+          do (cond ((or (digit-char-p char)
+                        (lower-case-p char))
+                    (setf was-uppercase NIL))
+                   ((not was-uppercase)
+                    (setf was-uppercase T)
+                    (write-char #\- out)))
+             (write-char (char-upcase char) out))))
+
 (defmacro defglfwfun (name return args)
-  `(cffi:defcfun (,(cffi:translate-camelcase-name (subseq name (length "glfw"))) ,name) ,return ,@args))
+  `(cffi:defcfun (,(intern (translate-name (subseq name (length "glfw")))) ,name) ,return ,@args))
 
 (defglfwfun "glfwInit" :bool ())
 (defglfwfun "glfwTerminate" :void ())
