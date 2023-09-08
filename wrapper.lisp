@@ -30,7 +30,8 @@
          (unless (eql :no-error code)
            (error 'glfw-error :operation ',call :code code :message (cffi:foreign-string-to-lisp str :encoding :utf-8)))))))
 
-(defun init (&rest args &key)
+(defun init (&rest args &key platform joystick-hat-buttons angle-platform-type cocoa-chdir-resources cocoa-menubar x11-xcb-vulkan-surface)
+  (declare (ignore platform joystick-hat-buttons angle-platform-type cocoa-chdir-resources cocoa-menubar x11-xcb-vulkan-surface))
   (unless *initialized*
     (let ((lib (or (when (uiop:getenvp "WAYLAND_DISPLAY")
                      'glfw:libglfw-wayland)
@@ -38,7 +39,8 @@
       (unless (cffi:foreign-library-loaded-p lib)
         (cffi:load-foreign-library lib)))
     (loop for (k v) on args by #'cddr
-          do (glfw init-hint k v))
+          do (with-simple-restart (continue "Ignore the init hint.")
+               (glfw init-hint k v)))
     (glfw init)
     (list-monitors :refresh T)
     (setf *initialized* T)))
@@ -167,13 +169,16 @@
    (swap-interval :initform 0 :accessor swap-interval)
    (title :initarg :title :initform "GLFW" :accessor title)))
 
-(defmethod initialize-instance :after ((window window) &rest args &key monitor share)
+(defmethod initialize-instance :after ((window window) &rest args &key monitor share
+                                                                       resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id)
+  (declare (ignore resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id))
   (init)
   (loop for (k v) on args by #'cddr
         unless (find k '(:width :height :title :monitor :share))
-        do (if (stringp v)
-               (glfw window-hint-string k v)
-               (glfw window-hint k v)))
+        do (with-simple-restart (continue "Ignore the window hint.")
+             (if (stringp v)
+                 (glfw window-hint-string k v)
+                 (glfw window-hint k v))))
   (let ((pointer (glfw create-window
                        (width window)
                        (height window)
@@ -394,6 +399,13 @@
 (defmethod (setf clipboard-string) (string (window window))
   (glfw set-clipboard-string (pointer window) string)
   string)
+
+(defun version ()
+  (extract-values ((major :int) (minor :int) (rev :int))
+    (glfw:get-version major minor rev)))
+
+(defun platform ()
+  (glfw:get-platform))
 
 (defun time ()
   (glfw:get-time))

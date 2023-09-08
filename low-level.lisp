@@ -333,11 +333,11 @@
   (:x11-xcb-vulkan-surface #x00052001)
   (:wayland-libdecor       #x00053001)
   (:any-platform           #x00060000)
-  (:platform-win32         #x00060001)
-  (:platform-cocoa         #x00060002)
-  (:platform-wayland       #x00060003)
-  (:platform-x11           #x00060004)
-  (:platform-null          #x00060005)
+  (:win32                  #x00060001)
+  (:cocoa                  #x00060002)
+  (:wayland                #x00060003)
+  (:x11                    #x00060004)
+  (:null-platform          #x00060005)
 
   (:dont-care              -1))
 
@@ -480,7 +480,7 @@
 (defglfwfun "glfwGetVersion" :void ((major :pointer) (minor :pointer) (rev :pointer)))
 (defglfwfun "glfwGetVersionString" :string ())
 (defglfwfun "glfwGetError" error ((description :pointer)))
-(defglfwfun "glfwGetPlatform" :int ())
+(defglfwfun "glfwGetPlatform" flag ())
 (defglfwfun "glfwPlatformSupported" :bool ((platform flag)))
 
 (defglfwfun "glfwGetMonitors" :pointer ((count :pointer)))
