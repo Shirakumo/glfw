@@ -1,6 +1,7 @@
 (in-package #:org.shirakumo.fraf.glfw)
 
 (defvar *window-table* (make-hash-table :test 'eql))
+(defvar *initialized* NIL)
 
 (defun glfw:resolve-window (ptr)
   (gethash (cffi:pointer-address ptr) *window-table*))
@@ -19,24 +20,36 @@
          (unless (eql :no-error code)
            (error 'glfw-error :operation ',call :code code :message (cffi:foreign-string-to-lisp str :encoding :utf-8)))))))
 
-(defun init ()
-  (unless (cffi:foreign-library-loaded-p 'glfw:libglfw)
-    (cffi:load-foreign-library 'glfw:libglfw))
-  (glfw init))
+(defun init (&rest args &key)
+  (unless *initialized*
+    (unless (cffi:foreign-library-loaded-p 'glfw:libglfw)
+      (cffi:load-foreign-library 'glfw:libglfw))
+    (loop for (k v) on args by #'cddr
+          do (glfw init-hint k v))
+    (glfw init)
+    (setf *initialized* T)))
 
 (defun shutdown ()
-  (loop for window being the hash-values of *window-table*
-        do (destroy window))
-  (glfw terminate))
+  (when *initialized*
+    (loop for window being the hash-values of *window-table*
+          do (destroy window))
+    (glfw terminate)
+    (setf *initialized* NIL)))
 
 (defclass window ()
   ((pointer :initform NIL :accessor pointer)))
 
-(defmethod make-instance :after ((window window) &key width height title monitor share)
+(defmethod make-instance :after ((window window) &rest args &key width height title monitor share)
+  (init)
+  (loop for (k v) on args by #'cddr
+        unless (find k '(:width :height :title :monitor :share))
+        do (if (stringp v)
+               (glfw window-hint-string k v)
+               (glfw window-hint k v)))
   (let ((pointer (glfw create-window
                        (or width 800)
                        (or height 600)
-                       (or title "")
+                       (or title "GLFW")
                        (or monitor (cffi:null-pointer))
                        (or share (cffi:null-pointer))))
         ok)
@@ -88,7 +101,8 @@
 
 (defmethod glfw:window-position ((window window) xpos ypos))
 (defmethod glfw:window-size ((window window) width height))
-(defmethod glfw:window-close ((window window)))
+(defmethod glfw:window-close ((window window))
+  (glfw:set-window-should-close (pointer window) T))
 (defmethod glfw:window-refresh ((window window)))
 (defmethod glfw:window-focus ((window window) focused))
 (defmethod glfw:window-iconify ((window window) iconified))

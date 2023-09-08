@@ -468,7 +468,7 @@
 
 (defglfwfun "glfwInit" :bool ())
 (defglfwfun "glfwTerminate" :void ())
-(defglfwfun "glfwInitHint" :void ((hint flag) (value :int)))
+(defglfwfun "glfwInitHint" :void ((hint flag) (value flag)))
 (defglfwfun "glfwInitAllocator" :void ((allocator :pointer)))
 (defglfwfun "glfwInitVulkanLoader" :void ((loader :pointer)))
 (defglfwfun "glfwGetVersion" :void ((major :pointer) (minor :pointer) (rev :pointer)))
@@ -491,7 +491,7 @@
 (defglfwfun "glfwGetGammaRamp" :pointer ((monitor :pointer)))
 (defglfwfun "glfwSetGammaRamp" :void ((monitor :pointer) (ramp :pointer)))
 (defglfwfun "glfwDefaultWindowHints" :void ())
-(defglfwfun "glfwWindowHint" :void ((hint flag) (value :int)))
+(defglfwfun "glfwWindowHint" :void ((hint flag) (value flag)))
 (defglfwfun "glfwWindowHintString" :void ((hint flag) (value :string)))
 (defglfwfun "glfwCreateWindow" :pointer ((width :int) (height :int) (title :string) (monitor :pointer) (share :pointer)))
 (defglfwfun "glfwDestroyWindow" :void ((window :pointer)))
