@@ -219,7 +219,30 @@
   (:use #:cl)
   (:local-nicknames
    (#:glfw #:org.shirakumo.fraf.glfw.cffi))
-  (:shadow #:time)
+  (:shadow #:time #:char)
+  (:import-from
+   #:org.shirakumo.fraf.glfw.cffi
+   #:allocate
+   #:reallocate
+   #:deallocate
+   #:window-size
+   #:window-close
+   #:window-position
+   #:window-size
+   #:window-refresh
+   #:window-focus
+   #:window-iconify
+   #:window-maximize
+   #:framebuffer-size
+   #:window-content-scale
+   #:mouse-button
+   #:mouse-position
+   #:mouse-enter
+   #:mouse-scroll
+   #:key
+   #:char
+   #:char-modifiers
+   #:drop)
   (:export
    #:init
    #:shutdown))
