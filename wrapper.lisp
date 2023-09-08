@@ -32,8 +32,11 @@
 
 (defun init (&rest args &key)
   (unless *initialized*
-    (unless (cffi:foreign-library-loaded-p 'glfw:libglfw)
-      (cffi:load-foreign-library 'glfw:libglfw))
+    (let ((lib (or (when (uiop:getenvp "WAYLAND_DISPLAY")
+                     'glfw:libglfw-wayland)
+                   'glfw:libglfw)))
+      (unless (cffi:foreign-library-loaded-p lib)
+        (cffi:load-foreign-library lib)))
     (loop for (k v) on args by #'cddr
           do (glfw init-hint k v))
     (glfw init)

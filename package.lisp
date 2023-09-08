@@ -3,6 +3,7 @@
   (:shadow #:error #:char)
   (:export
    #:libglfw
+   #:libglfw-wayland
    #:key-state
    #:hat-state
    #:mouse-button

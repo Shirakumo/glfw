@@ -14,6 +14,10 @@
                  #+X86-64 "libglfw-win-amd64.dll"))
   (T (:or (:default "libglfw3") (:default "glfw3") (:default "libglfw") (:default "glfw"))))
 
+(cffi:define-foreign-library libglfw-wayland
+  (:unix (:or #+X86 "libglfw-lin-i686-wayland.so"
+              #+X86-64 "libglfw-lin-amd64-wayland.so")))
+
 (cffi:defcenum key-state
   (:release            0)
   (:press              1)
