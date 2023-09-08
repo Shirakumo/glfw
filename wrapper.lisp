@@ -1,6 +1,7 @@
 (in-package #:org.shirakumo.fraf.glfw)
 
 (defvar *object-table* (make-hash-table :test 'eql))
+(defvar *cursor-table* (make-hash-table :test 'eql))
 (defvar *monitors* ())
 (defvar *initialized* NIL)
 
@@ -54,9 +55,60 @@
     (glfw terminate)
     (setf *initialized* NIL)))
 
-(defclass monitor ()
-  ((pointer :initform NIL :initarg :pointer :accessor pointer)
-   (video-modes :initform NIL :reader video-modes)))
+(defclass foreign-object ()
+  ((pointer :initform NIL :initarg :pointer :accessor pointer)))
+
+(defmethod print-object ((object foreign-object) stream)
+  (print-unreadable-object (object stream :type T)
+    (if (pointer object)
+        (format stream "~8,'0x" (cffi:pointer-address (pointer object)))
+        (format stream "DEAD"))))
+
+(defclass cursor (foreign-object)
+  ())
+
+(defmethod initialize-instance :after ((cursor cursor) &key pixels width height (xhot 0) (yhot 0))
+  (when pixels
+    (cffi:with-foreign-objects ((image '(:struct glfw:image))
+                                (buffer :char (length pixels)))
+      (setf (glfw:image-width image) width)
+      (setf (glfw:image-height image) height)
+      (setf (glfw:image-pixels image) buffer)
+      (loop for i from 0 below (length pixels)
+            do (setf (cffi:mem-aref buffer :char i) (aref pixels i)))
+      (setf (pointer cursor) (glfw create-cursor image (round xhot) (round yhot))))))
+
+(defmethod destroy ((cursor cursor))
+  (when (pointer cursor)
+    (glfw destroy-cursor (pointer cursor))
+    (setf (pointer cursor) NIL)))
+
+(defclass standard-cursor (cursor)
+  ((name :initarg :name :reader name)))
+
+(defmethod print-object ((cursor standard-cursor) stream)
+  (print-unreadable-object (cursor stream :type T)
+    (format stream "~a" (name cursor))))
+
+(defmethod initialize-instance :after ((cursor standard-cursor) &key)
+  (setf (pointer cursor) (glfw create-standard-cursor (name cursor)))
+  (setf (gethash (name cursor) *cursor-table*) cursor))
+
+(defmethod cursor ((name keyword))
+  (or (gethash name *cursor-table*)
+      (make-instance 'cursor :name name)))
+
+(defmethod destroy ((cursor standard-cursor))
+  (when (pointer cursor)
+    (remhash name *cursor-table*)
+    (setf (pointer cursor) NIL)))
+
+(defclass monitor (foreign-object)
+  ((video-modes :initform NIL :reader video-modes)))
+
+(defmethod print-object ((monitor monitor) stream)
+  (print-unreadable-object (monitor stream :type T)
+    (format stream "~a" (name cursor))))
 
 (defmethod initialize-instance :after ((monitor monitor) &key)
   (setf (slot-value monitor 'video-modes)
@@ -160,14 +212,14 @@
       (glfw set-gamma-ramp (pointer monitor) ramp)
       ramps)))
 
-(defclass window ()
-  ((pointer :initform NIL :accessor pointer)
-   (width :initarg :width :initform 800 :reader width)
+(defclass window (foreign-object)
+  ((width :initarg :width :initform 800 :reader width)
    (height :initarg :height :initform 600 :reader height)
    (aspect-ratio :initform NIL :accessor aspect-ratio)
    (size-limits :initform (list -1 -1 -1 -1) :accessor size-limits)
    (swap-interval :initform 0 :accessor swap-interval)
-   (title :initarg :title :initform "GLFW" :accessor title)))
+   (title :initarg :title :initform "GLFW" :accessor title)
+   (cursor :initform NIL)))
 
 (defmethod initialize-instance :after ((window window) &rest args &key monitor share
                                                                        resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id)
@@ -431,3 +483,17 @@
 
 (defmethod (setf swap-interval) :before (interval (window window))
   (glfw swap-interval interval))
+
+(defmethod cursor ((window window))
+  (let ((cursor (slot-value window 'cursor)))
+    (unless cursor
+      (setf cursor (cursor :arrow))
+      (setf (slot-value window 'cursor) cursor))
+    cursor))
+
+(defmethod (setf cursor) ((cursor cursor) (window window))
+  (glfw set-cursor (pointer window) (pointer cursor))
+  (setf (slot-value window 'cursor) cursor))
+
+(defmethod (setf cursor) (thing (window window))
+  (setf (cursor window) (cursor thing)))

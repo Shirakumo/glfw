@@ -349,6 +349,18 @@
   (:connected              #x00040001)
   (:disconnected           #x00040002))
 
+(cffi:defcenum cursor
+  (:arrow           #x00036001)
+  (:ibeam           #x00036002)
+  (:crosshair       #x00036003)
+  (:pointing-hand   #x00036004)
+  (:resize-ew       #x00036005)
+  (:resize-ns       #x00036006)
+  (:resize-nwse     #x00036007)
+  (:resize-nesw     #x00036008)
+  (:resize-all      #x00036009)
+  (:not-allowed     #x0003600a))
+
 (cffi:defcstruct (video-mode :conc-name video-mode-)
   (width :int)
   (height :int)
@@ -544,9 +556,9 @@
 (defglfwfun "glfwGetMouseButton" key-state ((window :pointer) (button mouse-button)))
 (defglfwfun "glfwGetCursorPos" :void ((window :pointer) (xpos :pointer) (ypos :pointer)))
 (defglfwfun "glfwSetCursorPos" :void ((window :pointer) (xpos :double) (ypos :double)))
-;;>
+
 (defglfwfun "glfwCreateCursor" :pointer ((image :pointer) (xhot :int) (yhot :int)))
-(defglfwfun "glfwCreateStandardCursor" :pointer ((shape :int)))
+(defglfwfun "glfwCreateStandardCursor" :pointer ((shape cursor)))
 (defglfwfun "glfwDestroyCursor" :void ((cursor :pointer)))
 (defglfwfun "glfwSetCursor" :void ((window :pointer) (cursor :pointer)))
 (defglfwfun "glfwJoystickPresent" :bool ((jid :int)))

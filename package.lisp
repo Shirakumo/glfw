@@ -15,6 +15,7 @@
    #:flag
    #:joystick-event
    #:monitor-event
+   #:cursor
    #:video-mode
    #:video-mode-width
    #:video-mode-height
