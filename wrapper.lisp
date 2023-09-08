@@ -40,11 +40,8 @@
 (defun init (&rest args &key platform joystick-hat-buttons angle-platform-type cocoa-chdir-resources cocoa-menubar x11-xcb-vulkan-surface)
   (declare (ignore platform joystick-hat-buttons angle-platform-type cocoa-chdir-resources cocoa-menubar x11-xcb-vulkan-surface))
   (unless *initialized*
-    (let ((lib (or (when (uiop:getenvp "WAYLAND_DISPLAY")
-                     'glfw:libglfw-wayland)
-                   'glfw:libglfw)))
-      (unless (cffi:foreign-library-loaded-p lib)
-        (cffi:load-foreign-library lib)))
+    (unless (cffi:foreign-library-loaded-p 'glfw:libglfw)
+      (cffi:load-foreign-library 'glfw:libglfw))
     (loop for (k v) on args by #'cddr
           do (with-simple-restart (continue "Ignore the init hint.")
                (glfw init-hint k v)))
