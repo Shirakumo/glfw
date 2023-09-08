@@ -17,6 +17,12 @@
 (defun glfw:resolve-window (ptr)
   (gethash (cffi:pointer-address ptr) *object-table*))
 
+(defmacro extract-values (bindings &body body)
+  `(cffi:with-foreign-objects ,bindings
+     ,@body
+     (list ,@(loop for (var type) in bindings
+                   collect `(cffi:mem-ref ,var ,type)))))
+
 (define-condition glfw-error (error)
   ((operation :initarg :operation :initform NIL :reader operation)
    (code :initarg :code :initform NIL :reader code)
@@ -63,6 +69,8 @@
     (if (pointer object)
         (format stream "~8,'0x" (cffi:pointer-address (pointer object)))
         (format stream "DEAD"))))
+
+(defgeneric destroy (foreign-object))
 
 (defclass cursor (foreign-object)
   ())
@@ -149,12 +157,6 @@
       (list-monitors :refresh T)
       (ptr-object (glfw get-primary-monitor))
       (error 'glfw-error :message "Getting a primary monitor that is not part of the monitors list.")))
-
-(defmacro extract-values (bindings &body body)
-  `(cffi:with-foreign-objects ,bindings
-     ,@body
-     (list ,@(loop for (var type) in bindings
-                   collect `(cffi:mem-ref ,var ,type)))))
 
 (defmethod location ((monitor monitor))
   (extract-values ((x :int) (y :int))
