@@ -433,49 +433,49 @@
 (defglfwcallback allocate :pointer ((size :size) (window :pointer)))
 (defglfwcallback reallocate :pointer ((ptr :pointer) (size :size) (window :pointer)))
 (defglfwcallback deallocate :void ((ptr :pointer) (size :size) (window :pointer)))
-(defglfwcallback window-position :void ((window :pointer) (xpos :int) (ypos :int)))
-(defglfwcallback window-size :void ((window :pointer) (width :int) (height :int)))
-(defglfwcallback window-close :void ((window :pointer)))
-(defglfwcallback window-refresh :void ((window :pointer)))
-(defglfwcallback window-focus :void ((window :pointer) (focused :bool)))
-(defglfwcallback window-iconify :void ((window :pointer) (iconified :bool)))
-(defglfwcallback window-maximize :void ((window :pointer) (maximized :bool)))
-(defglfwcallback framebuffer-size :void ((window :pointer) (width :int) (height :int)))
-(defglfwcallback window-content-scale :void ((window :pointer) (xscale :float) (yscale :float)))
-(defglfwcallback mouse-button :void ((window :pointer) (button mouse-button) (action key-state) (modifiers modifier)))
-(defglfwcallback mouse-position :void ((window :pointer) (xpos :int) (ypos :int)))
-(defglfwcallback mouse-enter :void ((window :pointer) (entered :bool)))
-(defglfwcallback mouse-scroll :void ((window :pointer) (xoffset :double) (yoffset :double)))
-(defglfwcallback key :void ((window :pointer) (key key) (scan-code :int) (action key-state) (modifiers modifier)))
-(defglfwcallback char :void ((window :pointer) (code-point :uint)))
-(defglfwcallback char-modifiers :void ((window :pointer) (code-point :uint) (modifiers modifier)))
+(defglfwcallback window-moved :void ((window :pointer) (xpos :int) (ypos :int)))
+(defglfwcallback window-resized :void ((window :pointer) (width :int) (height :int)))
+(defglfwcallback window-closed :void ((window :pointer)))
+(defglfwcallback window-refreshed :void ((window :pointer)))
+(defglfwcallback window-focused :void ((window :pointer) (focused :bool)))
+(defglfwcallback window-iconified :void ((window :pointer) (iconified :bool)))
+(defglfwcallback window-maximized :void ((window :pointer) (maximized :bool)))
+(defglfwcallback framebuffer-resized :void ((window :pointer) (width :int) (height :int)))
+(defglfwcallback window-content-scale-changed :void ((window :pointer) (xscale :float) (yscale :float)))
+(defglfwcallback mouse-button-changed :void ((window :pointer) (button mouse-button) (action key-state) (modifiers modifier)))
+(defglfwcallback mouse-moved :void ((window :pointer) (xpos :int) (ypos :int)))
+(defglfwcallback mouse-entered :void ((window :pointer) (entered :bool)))
+(defglfwcallback mouse-scrolled :void ((window :pointer) (xoffset :double) (yoffset :double)))
+(defglfwcallback key-changed :void ((window :pointer) (key key) (scan-code :int) (action key-state) (modifiers modifier)))
+(defglfwcallback char-entered :void ((window :pointer) (code-point :uint) (modifiers modifier)))
 
-(defgeneric drop (window paths))
-(cffi:defcallback drop :void ((window :pointer) (path-count :int) (paths :pointer))
+(defgeneric file-dropped (window paths))
+(cffi:defcallback file-dropped :void ((window :pointer) (path-count :int) (paths :pointer))
   (restart-case (let ((window-ptr window) (window (resolve-window window)))
                   (if window
                       ;; Special handling to decode the paths
-                      (drop window (loop for i from 0 below path-count
-                                         collect (cffi:foreign-string-to-lisp (cffi:mem-aref paths :pointer i) :encoding :utf-8)))
+                      (file-dropped window (loop for i from 0 below path-count
+                                                 collect (cffi:foreign-string-to-lisp (cffi:mem-aref paths :pointer i) :encoding :utf-8)))
                       (format *error-output*
                               "~&[GLFW] ~a callback to unmapped window pointer ~8,'0x, ignoring.~%"
-                              'drop (cffi-sys:pointer-address window-ptr))))
+                              'file-dropped (cffi-sys:pointer-address window-ptr))))
     (abort ()
       :report "Abort the callback."
       NIL)))
 
 ;;; Main interface
-(defun translate-name (name)
-  (with-output-to-string (out)
-    (loop with was-uppercase = T
-          for char across name
-          do (cond ((or (digit-char-p char)
-                        (lower-case-p char))
-                    (setf was-uppercase NIL))
-                   ((not was-uppercase)
-                    (setf was-uppercase T)
-                    (write-char #\- out)))
-             (write-char (char-upcase char) out))))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun translate-name (name)
+    (with-output-to-string (out)
+      (loop with was-uppercase = T
+            for char across name
+            do (cond ((or (digit-char-p char)
+                          (lower-case-p char))
+                      (setf was-uppercase NIL))
+                     ((not was-uppercase)
+                      (setf was-uppercase T)
+                      (write-char #\- out)))
+               (write-char (char-upcase char) out)))))
 
 (defmacro defglfwfun (name return args)
   `(cffi:defcfun (,(intern (translate-name (subseq name (length "glfw")))) ,name) ,return ,@args))

@@ -50,23 +50,22 @@
    #:allocate
    #:reallocate
    #:deallocate
-   #:window-position
-   #:window-size
-   #:window-close
-   #:window-refresh
-   #:window-focus
-   #:window-iconify
-   #:window-maximize
-   #:framebuffer-size
-   #:window-content-scale
-   #:mouse-button
-   #:mouse-position
-   #:mouse-enter
-   #:mouse-scroll
-   #:key
-   #:char
-   #:char-modifiers
-   #:drop
+   #:window-resized
+   #:window-closed
+   #:window-moved
+   #:window-refreshed
+   #:window-focused
+   #:window-iconified
+   #:window-maximized
+   #:framebuffer-resized
+   #:window-content-scale-changed
+   #:mouse-button-changed
+   #:mouse-moved
+   #:mouse-entered
+   #:mouse-scrolled
+   #:key-changed
+   #:char-entered
+   #:file-dropped
    #:init
    #:terminate
    #:init-hint
@@ -172,7 +171,7 @@
    #:create-window-surface
    #:set-error-callback
    #:set-monitor-callback
-   #:set-winow-pos-callback
+   #:set-window-pos-callback
    #:set-window-size-callback
    #:set-window-close-callback
    #:set-window-refresh-callback
@@ -219,30 +218,28 @@
   (:use #:cl)
   (:local-nicknames
    (#:glfw #:org.shirakumo.fraf.glfw.cffi))
-  (:shadow #:time #:char)
-  (:import-from
+  (:shadow #:time)
+  (:shadowing-import-from
    #:org.shirakumo.fraf.glfw.cffi
    #:allocate
    #:reallocate
    #:deallocate
-   #:window-size
-   #:window-close
-   #:window-position
-   #:window-size
-   #:window-refresh
-   #:window-focus
-   #:window-iconify
-   #:window-maximize
-   #:framebuffer-size
-   #:window-content-scale
-   #:mouse-button
-   #:mouse-position
-   #:mouse-enter
-   #:mouse-scroll
-   #:key
-   #:char
-   #:char-modifiers
-   #:drop)
+   #:window-resized
+   #:window-closed
+   #:window-moved
+   #:window-refreshed
+   #:window-focused
+   #:window-iconified
+   #:window-maximized
+   #:framebuffer-resized
+   #:window-content-scale-changed
+   #:mouse-button-changed
+   #:mouse-moved
+   #:mouse-entered
+   #:mouse-scrolled
+   #:key-changed
+   #:char-entered
+   #:file-dropped)
   (:export
    #:glfw-error
    #:operation
