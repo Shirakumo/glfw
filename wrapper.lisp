@@ -1,10 +1,20 @@
 (in-package #:org.shirakumo.fraf.glfw)
 
-(defvar *window-table* (make-hash-table :test 'eql))
+(defvar *object-table* (make-hash-table :test 'eql))
+(defvar *monitors* ())
 (defvar *initialized* NIL)
 
+(defun ptr-object (ptr)
+  (gethash (cffi:pointer-address ptr) *object-table*))
+
+(defun (setf ptr-object) (value ptr)
+  (if value
+      (setf (gethash (cffi:pointer-address ptr) *object-table*) value)
+      (remhash (cffi:pointer-address ptr) *object-table*))
+  value)
+
 (defun glfw:resolve-window (ptr)
-  (gethash (cffi:pointer-address ptr) *window-table*))
+  (gethash (cffi:pointer-address ptr) *object-table*))
 
 (define-condition glfw-error (error)
   ((operation :initarg :operation :initform NIL :reader operation)
@@ -27,19 +37,128 @@
     (loop for (k v) on args by #'cddr
           do (glfw init-hint k v))
     (glfw init)
+    (list-monitors :refresh T)
     (setf *initialized* T)))
 
 (defun shutdown ()
   (when *initialized*
-    (loop for window being the hash-values of *window-table*
+    (loop for window being the hash-values of *object-table*
           do (destroy window))
+    (loop for monitor in *monitors*
+          do (destroy monitor))
     (glfw terminate)
     (setf *initialized* NIL)))
+
+(defclass monitor ()
+  ((pointer :initform NIL :initarg :pointer :accessor pointer)
+   (video-modes :initform NIL :reader video-modes)))
+
+(defmethod initialize-instance :after ((monitor monitor) &key)
+  (setf (slot-value monitor 'video-modes)
+        (cffi:with-foreign-object (count :int)
+          (let ((array (glfw get-monitors count)))
+            (loop for i from 0 below (cffi:mem-ref count :int)
+                  for ptr = (cffi:mem-aref array :pointer i)
+                  collect (cffi:mem-ref ptr '(:struct glfw:video-mode))))))
+  (setf (ptr-object (pointer monitor)) monitor)
+  (push monitor *monitors*))
+
+(defmethod destroy ((monitor monitor))
+  (when (pointer monitor)
+    (setf (ptr-object (pointer monitor)) NIL)
+    (setf *monitors* (remove monitor *monitors*))
+    (setf (pointer monitor) NIL)))
+
+(defun glfw:monitor-connected (ptr)
+  (make-instance 'monitor :pointer ptr))
+
+(defun glfw:monitor-disconnected (ptr)
+  (let ((monitor (ptr-object ptr)))
+    (when monitor (destroy monitor))))
+
+(defun list-monitors (&key refresh)
+  (when refresh
+    (cffi:with-foreign-object (count :int)
+      (let ((array (glfw get-monitors count)))
+        (loop for monitor in *monitors*
+              do (destroy monitor))
+        (loop for i from 0 below (cffi:mem-ref count :int)
+              for ptr = (cffi:mem-aref array :pointer i)
+              do (make-instance 'monitor :pointer ptr)))))
+  *monitors*)
+
+(defun primary-monitor ()
+  (or (ptr-object (glfw get-primary-monitor))
+      (list-monitors :refresh T)
+      (ptr-object (glfw get-primary-monitor))
+      (error 'glfw-error :message "Getting a primary monitor that is not part of the monitors list.")))
+
+(defmacro extract-values (bindings &body body)
+  `(cffi:with-foreign-objects ,bindings
+     ,@body
+     (list ,@(loop for (var type) in bindings
+                   collect `(cffi:mem-ref ,var ,type)))))
+
+(defmethod location ((monitor monitor))
+  (extract-values ((x :int) (y :int))
+    (glfw get-monitor-pos (pointer monitor) x y)))
+
+(defmethod work-area ((monitor monitor))
+  (extract-values ((x :int) (y :int) (w :int) (h :int))
+    (glfw get-monitor-workarea (pointer monitor) x y w h)))
+
+(defmethod physical-size ((monitor monitor))
+  (extract-values ((x :int) (y :int))
+    (glfw get-monitor-physical-size (pointer monitor) x y)))
+
+(defmethod content-scale ((monitor monitor))
+  (extract-values ((x :float) (y :float))
+    (glfw get-monitor-content-scale (pointer monitor) x y)))
+
+(defmethod name ((monitor monitor))
+  (glfw get-monitor-name (pointer monitor)))
+
+(defmethod video-mode ((monitor monitor))
+  (let ((mode (glfw get-video-mode monitor)))
+    (cffi:mem-ref mode '(:struct glfw:video-mode))))
+
+(defmethod gamma ((monitor monitor))
+  (let* ((ramp (glfw get-gamma-ramp (pointer monitor)))
+         (midpoint (cffi:mem-aref (glfw:gamma-ramp-red ramp) :ushort (truncate (glfw:gamma-ramp-size ramp) 2))))
+    (log midpoint 0.5)))
+
+(defmethod (setf gamma) (gamma (monitor monitor))
+  (glfw set-gamma (pointer monitor) (float gamma 0f0))
+  gamma)
+
+(defmethod gamma-ramp ((monitor monitor))
+  (let* ((ramp (glfw get-gamma-ramp (pointer monitor)))
+         (count (glfw:gamma-ramp-size ramp)))
+    (list :red (cffi:foreign-array-to-lisp (glfw:gamma-ramp-red ramp) (list :array :ushort count))
+          :green (cffi:foreign-array-to-lisp (glfw:gamma-ramp-green ramp) (list :array :ushort count))
+          :blue (cffi:foreign-array-to-lisp (glfw:gamma-ramp-blue ramp) (list :array :ushort count)))))
+
+(defmethod (setf gamma-ramp) (ramps (monitor monitor))
+  (destructuring-bind (&key red green blue) ramps
+    (assert (= (length red) (length green) (length blue)))
+    (cffi:with-foreign-objects ((ramp '(:struct glfw:gamma-ramp))
+                                (r :ushort (length red))
+                                (g :ushort (length red))
+                                (b :ushort (length red)))
+      (cffi:lisp-array-to-foreign red r (list :array :ushort (length red)))
+      (cffi:lisp-array-to-foreign red g (list :array :ushort (length red)))
+      (cffi:lisp-array-to-foreign red b (list :array :ushort (length red)))
+      (setf (glfw:gamma-ramp-red ramp) r)
+      (setf (glfw:gamma-ramp-green ramp) g)
+      (setf (glfw:gamma-ramp-blue ramp) b)
+      (setf (glfw:gamma-ramp-size ramp) (length red))
+      (glfw set-gamma-ramp (pointer monitor) ramp)
+      ramps)))
 
 (defclass window ()
   ((pointer :initform NIL :accessor pointer)))
 
-(defmethod make-instance :after ((window window) &rest args &key width height title monitor share)
+(defmethod initialize-instance :after ((window window) &rest args &key width height title monitor share)
   (init)
   (loop for (k v) on args by #'cddr
         unless (find k '(:width :height :title :monitor :share))
@@ -54,7 +173,7 @@
                        (or share (cffi:null-pointer))))
         ok)
     (setf (pointer window) pointer)
-    (setf (gethash (cffi:pointer-address pointer) *window-table*) window)
+    (setf (ptr-object ptr) window)
     (unwind-protect
          (progn
            (register-callbacks window)
@@ -86,7 +205,7 @@
 
 (defmethod destroy ((window window))
   (when (pointer window)
-    (remhash (cffi:pointer-address (pointer window)) *window-table*)
+    (setf (ptr-object (pointer window)) NIL)
     (glfw destroy-window (pointer window))
     (setf (pointer window) NIL)))
 

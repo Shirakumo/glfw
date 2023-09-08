@@ -400,8 +400,8 @@
 (cffi:defcallback error :void ((code :int) (description :string))
   (error code description))
 
-(defun monitor-connected (id))
-(defun monitor-disconnected (id))
+(defun monitor-connected (monitor))
+(defun monitor-disconnected (monitor))
 
 (cffi:defcallback monitor :void ((monitor :pointer) (event monitor-event))
   (case event
@@ -476,6 +476,7 @@
 (defglfwfun "glfwGetError" error ((description :pointer)))
 (defglfwfun "glfwGetPlatform" :int ())
 (defglfwfun "glfwPlatformSupported" :bool ((platform flag)))
+
 (defglfwfun "glfwGetMonitors" :pointer ((count :pointer)))
 (defglfwfun "glfwGetPrimaryMonitor" :pointer ())
 (defglfwfun "glfwGetMonitorPos" :void ((monitor :pointer) (xpos :pointer) (ypos :pointer)))
@@ -490,6 +491,7 @@
 (defglfwfun "glfwSetGamma" :void ((monitor :pointer) (gamma :float)))
 (defglfwfun "glfwGetGammaRamp" :pointer ((monitor :pointer)))
 (defglfwfun "glfwSetGammaRamp" :void ((monitor :pointer) (ramp :pointer)))
+
 (defglfwfun "glfwDefaultWindowHints" :void ())
 (defglfwfun "glfwWindowHint" :void ((hint flag) (value flag)))
 (defglfwfun "glfwWindowHintString" :void ((hint flag) (value :string)))
@@ -523,6 +525,7 @@
 (defglfwfun "glfwSetWindowAttrib" :void ((window :pointer) (attrib :int) (value :int)))
 (defglfwfun "glfwSetWindowUserPointer" :void ((window :pointer) (pointer :pointer)))
 (defglfwfun "glfwGetWindowUserPointer" :pointer ((window :pointer)))
+
 (defglfwfun "glfwPollEvents" :void ())
 (defglfwfun "glfwWaitEvents" :void ())
 (defglfwfun "glfwWaitEventsTimeout" :void ((timeout :double)))
@@ -552,6 +555,7 @@
 (defglfwfun "glfwUpdateGamepadMappings" :bool ((string :string)))
 (defglfwfun "glfwGetGamepadName" :string ((jid :int)))
 (defglfwfun "glfwGetGamepadState" :bool ((jid :int) (state :pointer)))
+
 (defglfwfun "glfwSetClipboardString" :void ((window :pointer) (string :string)))
 (defglfwfun "glfwGetClipboardString" :string ((window :pointer)))
 (defglfwfun "glfwGetTime" :double ())
@@ -569,6 +573,7 @@
 (defglfwfun "glfwGetInstanceProcAddress" :pointer ((instance :pointer) (procname :string)))
 (defglfwfun "glfwGetPhysicalDevicePresentationSupport" :bool ((instance :pointer) (device :pointer) (queuefamily :uint32)))
 (defglfwfun "glfwCreateWindowSurface" :int ((instance :pointer) (window :pointer) (allocator :pointer) (surface :pointer)))
+
 (defglfwfun "glfwSetErrorCallback" :pointer ((callback :pointer)))
 (defglfwfun "glfwSetMonitorCallback" :pointer ((callback :pointer)))
 (defglfwfun "glfwSetWindowPosCallback" :pointer ((window :pointer) (callback :pointer)))
