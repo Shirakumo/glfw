@@ -261,6 +261,10 @@
    #:content-scale
    #:name
    #:video-mode
+   #:size
+   #:width
+   #:height
+   #:refresh-rate
    #:gamma
    #:gamma-ramp
    #:window

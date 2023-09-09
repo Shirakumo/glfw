@@ -105,7 +105,7 @@
 
 (defmethod destroy ((cursor standard-cursor))
   (when (pointer cursor)
-    (remhash name *cursor-table*)
+    (remhash (name cursor) *cursor-table*)
     (setf (pointer cursor) NIL)))
 
 (defclass monitor (foreign-object)
@@ -113,7 +113,7 @@
 
 (defmethod print-object ((monitor monitor) stream)
   (print-unreadable-object (monitor stream :type T)
-    (format stream "~a" (name cursor))))
+    (format stream "~a" (name monitor))))
 
 (defmethod initialize-instance :after ((monitor monitor) &key)
   (setf (slot-value monitor 'video-modes)
@@ -178,6 +178,21 @@
   (let ((mode (glfw get-video-mode monitor)))
     (cffi:mem-ref mode '(:struct glfw:video-mode))))
 
+(defmethod size ((monitor monitor))
+  (let ((mode (glfw get-video-mode monitor)))
+    (list (glfw:video-mode-width mode)
+          (glfw:video-mode-height mode))))
+
+(defmethod width ((monitor monitor))
+  (glfw:video-mode-width (glfw get-video-mode monitor)))
+
+(defmethod height ((monitor monitor))
+  (glfw:video-mode-height (glfw get-video-mode monitor)))
+
+(defmethod refresh-rate ((monitor monitor))
+  (let ((mode (glfw get-video-mode monitor)))
+    (glfw:video-mode-refresh-rate mode)))
+
 (defmethod gamma ((monitor monitor))
   (let* ((ramp (glfw get-gamma-ramp (pointer monitor)))
          (midpoint (cffi:mem-aref (glfw:gamma-ramp-red ramp) :ushort (truncate (glfw:gamma-ramp-size ramp) 2))))
@@ -237,7 +252,7 @@
                        (if share (pointer share) (cffi:null-pointer))))
         ok)
     (setf (pointer window) pointer)
-    (setf (ptr-object ptr) window)
+    (setf (ptr-object pointer) window)
     (unwind-protect
          (progn
            (register-callbacks window)
@@ -246,25 +261,26 @@
         (destroy window)))))
 
 (defmethod register-callbacks ((window window))
-  (glfw:set-error-callback pointer (cffi:callback glfw:error))
-  (glfw:set-monitor-callback pointer (cffi:callback glfw:monitor))
-  (glfw:set-joystick-callback pointer (cffi:callback glfw:joystick))
-  (glfw:set-window-pos-callback pointer (cffi:callback glfw:window-moved))
-  (glfw:set-window-size-callback pointer (cffi:callback glfw:window-resized))
-  (glfw:set-window-close-callback pointer (cffi:callback glfw:window-closed))
-  (glfw:set-window-refresh-callback pointer (cffi:callback glfw:window-refreshed))
-  (glfw:set-window-focus-callback pointer (cffi:callback glfw:window-focused))
-  (glfw:set-window-iconify-callback pointer (cffi:callback glfw:window-iconified))
-  (glfw:set-window-maximize-callback pointer (cffi:callback glfw:window-maximized))
-  (glfw:set-framebuffer-size-callback pointer (cffi:callback glfw:framebuffer-resized))
-  (glfw:set-window-content-scale-callback pointer (cffi:callback glfw:window-content-scale-changed))
-  (glfw:set-key-callback pointer (cffi:callback glfw:key-changed))
-  (glfw:set-char-mods-callback pointer (cffi:callback glfw:char-entered))
-  (glfw:set-mouse-button-callback pointer (cffi:callback glfw:mouse-button-changed))
-  (glfw:set-cursor-pos-callback pointer (cffi:callback glfw:mouse-moved))
-  (glfw:set-cursor-enter-callback pointer (cffi:callback glfw:mouse-entered))
-  (glfw:set-scroll-callback pointer (cffi:callback glfw:mouse-scrolled))
-  (glfw:set-drop-callback pointer (cffi:callback glfw:file-dropped)))
+  (let ((pointer (pointer window)))
+    (glfw:set-error-callback (cffi:callback glfw:error))
+    (glfw:set-monitor-callback (cffi:callback glfw:monitor))
+    (glfw:set-joystick-callback (cffi:callback glfw:joystick))
+    (glfw:set-window-pos-callback pointer (cffi:callback glfw:window-moved))
+    (glfw:set-window-size-callback pointer (cffi:callback glfw:window-resized))
+    (glfw:set-window-close-callback pointer (cffi:callback glfw:window-closed))
+    (glfw:set-window-refresh-callback pointer (cffi:callback glfw:window-refreshed))
+    (glfw:set-window-focus-callback pointer (cffi:callback glfw:window-focused))
+    (glfw:set-window-iconify-callback pointer (cffi:callback glfw:window-iconified))
+    (glfw:set-window-maximize-callback pointer (cffi:callback glfw:window-maximized))
+    (glfw:set-framebuffer-size-callback pointer (cffi:callback glfw:framebuffer-resized))
+    (glfw:set-window-content-scale-callback pointer (cffi:callback glfw:window-content-scale-changed))
+    (glfw:set-key-callback pointer (cffi:callback glfw:key-changed))
+    (glfw:set-char-mods-callback pointer (cffi:callback glfw:char-entered))
+    (glfw:set-mouse-button-callback pointer (cffi:callback glfw:mouse-button-changed))
+    (glfw:set-cursor-pos-callback pointer (cffi:callback glfw:mouse-moved))
+    (glfw:set-cursor-enter-callback pointer (cffi:callback glfw:mouse-entered))
+    (glfw:set-scroll-callback pointer (cffi:callback glfw:mouse-scrolled))
+    (glfw:set-drop-callback pointer (cffi:callback glfw:file-dropped))))
 
 (defmethod destroy ((window window))
   (when (pointer window)
@@ -401,7 +417,15 @@
   (ptr-object (glfw get-window-monitor (pointer window))))
 
 (defmethod (setf monitor) ((monitor monitor) (window window))
-  (glfw set-window-monitor (pointer window) (pointer monitor))
+  (glfw set-window-monitor (pointer window) (pointer monitor) 0 0 (width monitor) (height monitor) (refresh-rate monitor))
+  monitor)
+
+(defmethod (setf monitor) ((monitor cons) (window window))
+  (destructuring-bind (monitor &key width height (x 0) (y 0) refresh-rate) monitor
+    (when (eql T monitor)
+      (setf monitor (primary-monitor)))
+    (glfw set-window-monitor (pointer window) (pointer monitor)
+          x y (or width (width monitor)) (or height (height monitor)) (or refresh-rate (refresh-rate monitor))))
   monitor)
 
 (defmethod (setf monitor) ((default (eql T)) (window window))

@@ -111,6 +111,10 @@ See PHYSICAL-SIZE
 See CONTENT-SCALE
 See NAME
 See VIDEO-MODE
+See SIZE
+See WIDTH
+See HEIGHT
+See REFRESH-RATE
 See GAMMA
 See GAMMA-RAMP
 See MONITOR")
@@ -187,6 +191,12 @@ See MONITOR (type)")
     "Returns the current video-mode of the monitor.
 
 See VIDEO-MODES
+See MONITOR (type)")
+
+  (function refresh-rate
+    "Returns the current refresh rate of the monitor.
+
+See VIDEO-MODE
 See MONITOR (type)")
   
   (function gamma
@@ -382,15 +392,17 @@ See SWAP-INTERVAL
 See CURSOR")
   
   (function width
-    "Accesses the width of the window in pixels.
+    "Accesses the width of the window or monitor in pixels.
 
 See SIZE
+See MONITOR (type)
 See WINDOW (type)")
   
   (function height
-    "Accesses the height of the window in pixels.
+    "Accesses the height of the window or monitor in pixels.
 
 See SIZE
+See MONITOR (type)
 See WINDOW (type)")
   
   (function aspect-ratio
@@ -672,12 +684,13 @@ This is a list of (X Y).
 See WINDOW (type)")
   
   (function size
-    "Accesses the window's size on screen.
+    "Accesses the window or monitor's size on screen.
 
 This is a list of (W H).
 
 See WIDTH
 See HEIGHT
+See MONITOR (type)
 See WINDOW (type)")
   
   (function framebuffer-size
@@ -751,6 +764,18 @@ See WINDOW (type)")
   
   (function monitor
     "Access the current monitor the window resides on.
+
+When a monitor is set, the monitor's current video mode is retained
+and the window is instead fullscreened to that monitor's
+resolution. If you need to set the video mode of the monitor as well,
+you must supply a list as the value fitting this lambda-list:
+
+  (MONITOR &key WIDTH HEIGHT X Y REFRESH-RATE)
+
+WIDTH, HEIGHT, and REFRESH-RATE default to the values of the monitor's
+current video mode. X and Y default to 0.
+
+MONITOR may also be T in which case the primary monitor is used.
 
 See MONITOR (type)
 See WINDOW (type)")
