@@ -720,6 +720,47 @@ See WINDOW (type)")
 This should be a float in the range [0,1].
 
 See WINDOW (type)")
+
+  (function iconified-p
+    "Accesses whether the window is iconified.
+
+See ICONIFY
+See RESTORE
+See STATE
+See WINDOW (type)")
+
+  (function maximized-p
+    "Accesses whether the window is maximized.
+
+See MAXIMIZE
+See RESTORE
+See STATE
+See WINDOW (type)")
+
+  (function visible-p
+    "Accesses whether the window is visible.
+
+Note that an iconified window may also be treated as invisible.
+
+See SHOW
+See HIDE
+See STATE
+See WINDOW (type)")
+
+  (function state
+    "Accesses the current state of the window.
+
+The state may be one of the following:
+
+  :ICONIFIED
+  :HIDDEN
+  :MAXIMIZED
+  :NORMAL
+
+See ICONIFIED-P
+See MAXIMIZED-P
+See VISIBLE-P
+See WINDOW (type)")
   
   (function iconify
     "Request the window to be iconified.

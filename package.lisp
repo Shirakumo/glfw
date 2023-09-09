@@ -302,6 +302,10 @@
    #:frame-size
    #:content-scale
    #:opacity
+   #:iconified-p
+   #:maximized-p
+   #:visible-p
+   #:state
    #:iconify
    #:restore
    #:maximize

@@ -266,9 +266,8 @@
 (defmethod print-object ((window window) stream)
   (print-unreadable-object (window stream :type T)
     (if (pointer window)
-        (format stream "~dx~d @~8,'0x"
-                (width window) (height window)
-                (cond ())
+        (format stream "~dx~d ~a @~8,'0x"
+                (width window) (height window) (state window)
                 (cffi:pointer-address (pointer window)))
         (format stream "DEAD"))))
 
@@ -396,6 +395,55 @@
 (defmethod (setf opacity) (value (window window))
   (glfw set-window-opacity (pointer window) (float value 0f0))
   value)
+
+(defmethod iconified-p ((window window))
+  (< 0 (glfw get-window-attrib (pointer window) :iconified)))
+
+(defmethod (setf iconified-p) (value (window window))
+  (if value
+      (glfw iconify-window (pointer window))
+      (glfw restore-window (pointer window)))
+  value)
+
+(defmethod maximized-p ((window window))
+  (< 0 (glfw get-window-attrib (pointer window) :maximized)))
+
+(defmethod (setf maximized-p) (value (window window))
+  (if value
+      (glfw maximize-window (pointer window))
+      (glfw restore-window (pointer window)))
+  value)
+
+(defmethod visible-p ((window window))
+  (< 0 (glfw get-window-attrib (pointer window) :visible)))
+
+(defmethod (setf visible-p) (value (window window))
+  (if value
+      (glfw show-window (pointer window))
+      (glfw hide-window (pointer window)))
+  value)
+
+(defmethod state ((window window))
+  (cond ((iconified-p window)
+         :iconified)
+        ((not (visible-p window))
+         :hidden)
+        ((maximized-p window)
+         :maximized)
+        (T
+         :normal)))
+
+(defmethod (setf state) (state (window window))
+  (ecase state
+    (:iconified
+     (iconify window))
+    (:hidden
+     (hide window))
+    (:maximized
+     (maximize window))
+    (:normal
+     (show window)
+     (restore window))))
 
 (defmethod iconify ((window window))
   (glfw iconify-window (pointer window))

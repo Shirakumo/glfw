@@ -20,10 +20,15 @@ You will probably want to pass one of several initargs, such as ``:context-versi
 
 Once the window is created, you can start using OpenGL commands, ``swap-buffers`` to display, use the several window property accessors like ``size`` to manipulate it, and so on. Please again see the documentation of ``window`` for all supported operations.
 
-In order to react to inputs and other events, you should first create a subclass of ``window``, then implement methods on the event handling functions you need, like ``key-changed``. Then, simply create an instance of your window class and regularly call ``poll-input`` to process events.
+In order to react to inputs and other events, you should first create a subclass of ``window``, then implement methods on the event handling functions you need, like ``key-changed``. Then, simply create an instance of your window class and regularly call ``poll-events`` to process events.
 
 Once you are done with a window, you should dispose of it with ``destroy``.
 
 Prior to creating a window instance, you can also manually ``init`` the library and fetch the available monitors and their video modes via ``list-monitors``. This allows you to create a context that immediately fullscreens to the desired monitor, for instance.
 
 Once you are done with GLFW as a whole or want to shut everything down at once, you should call ``shutdown``.
+
+## Direct Access
+This library also provides the ``org.shirakumo.fraf.glfw.cffi`` package, which exposes the raw types and functions exported by the GLFW API. If you need access to functionality not covered by the wrapper or have other needs, you can sue the functions from that package to handle direct access.
+
+You can also mix the wrapper and low level calls by retrieving the ``pointer`` of a window or other ``foreign-object``.
