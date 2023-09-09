@@ -122,14 +122,14 @@ See MONITOR")
   (function video-modes
     "Returns a list of available video modes for the monitor.
 
-Each video mode is a property list with the following keys:
+Each video mode is a list list with the following elements:
 
-  :WIDTH        --- The width in pixels
-  :HEIGHT       --- The height in pixels
-  :RED-BITS     --- The bit-depth of the red channel (usually 8)
-  :GREEN-BITS   --- The bit-depth of the green channel (usually 8)
-  :BLUE-BITS    --- The bit-depth of the blue channel (usually 8)
-  :REFRESH-RATE --- The refresh rate in Hertz
+  WIDTH        --- The width in pixels
+  HEIGHT       --- The height in pixels
+  REFRESH-RATE --- The refresh rate in Hertz
+  RED-BITS     --- The bit-depth of the red channel (usually 8)
+  GREEN-BITS   --- The bit-depth of the green channel (usually 8)
+  BLUE-BITS    --- The bit-depth of the blue channel (usually 8)
 
 See MONITOR (type)")
   
