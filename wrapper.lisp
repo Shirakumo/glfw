@@ -101,7 +101,7 @@
 
 (defmethod cursor ((name symbol))
   (or (gethash name *cursor-table*)
-      (make-instance 'cursor :name name)))
+      (make-instance 'standard-cursor :name name)))
 
 (defmethod destroy ((cursor standard-cursor))
   (when (pointer cursor)
@@ -271,6 +271,7 @@
          (progn
            (setf (ptr-object pointer) window)
            (register-callbacks window)
+           (make-current window)
            (setf ok T))
       (unless ok
         (destroy window)))))
