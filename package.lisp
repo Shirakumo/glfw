@@ -326,4 +326,5 @@
    #:get-current
    #:swap-buffers
    #:swap-interval
-   #:cursor))
+   #:cursor
+   #:icon))

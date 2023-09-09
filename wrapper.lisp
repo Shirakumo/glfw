@@ -64,7 +64,7 @@
 (defmethod print-object ((object foreign-object) stream)
   (print-unreadable-object (object stream :type T)
     (if (pointer object)
-        (format stream "~8,'0x" (cffi:pointer-address (pointer object)))
+        (format stream "@~8,'0x" (cffi:pointer-address (pointer object)))
         (format stream "DEAD"))))
 
 (defgeneric destroy (foreign-object))
@@ -113,7 +113,9 @@
 
 (defmethod print-object ((monitor monitor) stream)
   (print-unreadable-object (monitor stream :type T)
-    (format stream "~a" (name monitor))))
+    (if (pointer monitor)
+        (format stream "~a" (name monitor))
+        (format stream "DEAD"))))
 
 (defmethod initialize-instance :after ((monitor monitor) &key)
   (setf (slot-value monitor 'video-modes)
@@ -233,7 +235,8 @@
    (size-limits :initform (list -1 -1 -1 -1) :accessor size-limits)
    (swap-interval :initform 0 :accessor swap-interval)
    (title :initarg :title :initform "GLFW" :accessor title)
-   (cursor :initform NIL)))
+   (cursor :initform NIL)
+   (icon :initform () :accessor icon)))
 
 (defmethod initialize-instance :after ((window window) &rest args &key monitor share
                                                                        resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id)
@@ -252,13 +255,22 @@
                        (if share (pointer share) (cffi:null-pointer))))
         ok)
     (setf (pointer window) pointer)
-    (setf (ptr-object pointer) window)
     (unwind-protect
          (progn
+           (setf (ptr-object pointer) window)
            (register-callbacks window)
            (setf ok T))
       (unless ok
         (destroy window)))))
+
+(defmethod print-object ((window window) stream)
+  (print-unreadable-object (window stream :type T)
+    (if (pointer window)
+        (format stream "~dx~d @~8,'0x"
+                (width window) (height window)
+                (cond ())
+                (cffi:pointer-address (pointer window)))
+        (format stream "DEAD"))))
 
 (defmethod register-callbacks ((window window))
   (let ((pointer (pointer window)))
@@ -517,3 +529,18 @@
 
 (defmethod (setf cursor) (thing (window window))
   (setf (cursor window) (cursor thing)))
+
+(defmethod (setf icon) :before (icons (window window))
+  (cffi:with-foreign-objects ((images '(:struct glfw:image) (length icons))
+                              (pixel-data :char (loop for (pixels) in icons sum (length pixels))))
+    (loop with p = 0
+          for i from 0
+          for (pixels width height) in icons
+          for image = (cffi:mem-aptr images '(:struct glfw:image) i)
+          do (setf (glfw:image-width image) width)
+             (setf (glfw:image-height image) height)
+             (setf (glfw:image-pixels image) (cffi:inc-pointer pixel-data p))
+             (loop for pixel across pixels
+                   do (setf (cffi:mem-aref pixel-data :char p) pixel)
+                      (incf p)))
+    (glfw set-window-icon (pointer window) (length icons) images)))
