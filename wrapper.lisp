@@ -23,6 +23,13 @@
      (list ,@(loop for (var type) in bindings
                    collect `(cffi:mem-ref ,var ,type)))))
 
+(declaim (inline flag-value))
+(defun flag-value (value)
+  (case value
+    ((NIL) 0)
+    ((T) 1)
+    (T value)))
+
 (define-condition glfw-error (error)
   ((operation :initarg :operation :initform NIL :reader operation)
    (code :initarg :code :initform NIL :reader code)
@@ -44,7 +51,7 @@
       (cffi:load-foreign-library 'glfw:libglfw))
     (loop for (k v) on args by #'cddr
           do (with-simple-restart (continue "Ignore the init hint.")
-               (glfw init-hint k v)))
+               (glfw init-hint k (flag-value v))))
     (glfw init)
     (list-monitors :refresh T)
     (setf *initialized* T)))
@@ -258,7 +265,7 @@
         do (with-simple-restart (continue "Ignore the window hint.")
              (if (stringp v)
                  (glfw window-hint-string k v)
-                 (glfw window-hint k v))))
+                 (glfw window-hint k (flag-value v)))))
   (let ((pointer (glfw create-window
                        (width window)
                        (height window)
@@ -508,14 +515,14 @@
   (glfw get-window-attrib (pointer window) attribute))
 
 (defmethod (setf attribute) (value attribute (window window))
-  (glfw set-window-attrib (pointer window) attribute value)
+  (glfw set-window-attrib (pointer window) attribute (flag-value value))
   value)
 
 (defmethod input-mode (mode (window window))
   (glfw get-input-mode (pointer window) mode))
 
 (defmethod (setf input-mode) (value mode (window window))
-  (glfw set-input-mode (pointer window) mode value)
+  (glfw set-input-mode (pointer window) mode (flag-value value))
   value)
 
 (defun poll-events (&key (timeout NIL))
