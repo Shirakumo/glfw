@@ -147,12 +147,12 @@
         (loop for i from 0 below (cffi:mem-ref count :int)
               for ptr = (cffi:mem-aref array :pointer i)
               do (make-instance 'monitor :pointer ptr)))))
-  *monitors*)
+  (copy-list *monitors*))
 
 (defun primary-monitor ()
   (or (ptr-object (glfw get-primary-monitor))
-      (list-monitors :refresh T)
-      (ptr-object (glfw get-primary-monitor))
+      (when (list-monitors :refresh T)
+        (ptr-object (glfw get-primary-monitor)))
       (error 'glfw-error :message "Getting a primary monitor that is not part of the monitors list.")))
 
 (defmethod location ((monitor monitor))
@@ -223,7 +223,6 @@
 (defmethod initialize-instance :after ((window window) &rest args &key monitor share
                                                                        resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id)
   (declare (ignore resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id))
-  (init)
   (loop for (k v) on args by #'cddr
         unless (find k '(:width :height :title :monitor :share))
         do (with-simple-restart (continue "Ignore the window hint.")
@@ -234,8 +233,8 @@
                        (width window)
                        (height window)
                        (title window)
-                       (or monitor (cffi:null-pointer))
-                       (or share (cffi:null-pointer))))
+                       (if monitor (pointer monitor) (cffi:null-pointer))
+                       (if share (pointer share) (cffi:null-pointer))))
         ok)
     (setf (pointer window) pointer)
     (setf (ptr-object ptr) window)
@@ -290,7 +289,7 @@
   (glfw:set-window-should-close (pointer window) T))
 
 (defmethod window-moved ((window window) xpos ypos))
-(defmethod window-resize ((window window) width height))
+(defmethod window-resized ((window window) width height))
 (defmethod window-refreshed ((window window)))
 (defmethod window-focused ((window window) focused))
 (defmethod window-iconified ((window window) iconified))

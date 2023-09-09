@@ -275,24 +275,22 @@
    #:allocate
    #:reallocate
    #:deallocate
-   #:window-size
-   #:window-close
-   #:window-position
-   #:window-size
-   #:window-refresh
-   #:window-focus
-   #:window-iconify
-   #:window-maximize
-   #:framebuffer-size
-   #:window-content-scale
-   #:mouse-button
-   #:mouse-position
-   #:mouse-enter
-   #:mouse-scroll
-   #:key
-   #:char
-   #:char-modifiers
-   #:drop
+   #:window-resized
+   #:window-closed
+   #:window-moved
+   #:window-refreshed
+   #:window-focused
+   #:window-iconified
+   #:window-maximized
+   #:framebuffer-resized
+   #:window-content-scale-changed
+   #:mouse-button-changed
+   #:mouse-moved
+   #:mouse-entered
+   #:mouse-scrolled
+   #:key-changed
+   #:char-entered
+   #:file-dropped
    #:should-close-p
    #:location
    #:size

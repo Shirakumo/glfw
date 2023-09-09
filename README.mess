@@ -1,10 +1,16 @@
 # About GLFW
-This is an up-to-date bindings library to the most recent GLFW OpenGL context management library. It allows easy and convenient access to creating windows for OpenGL or Vulkan graphics output.
+This is an up-to-date bindings library to the most recent "GLFW"(link https://glfw.org) OpenGL context management library. It allows easy and convenient access to creating windows for OpenGL or Vulkan graphics output.
 
-Unlike other common lisp libraries like cl-glfw, cl-glfw3, and bodge-glfw it is up to date with latest GLFW sources, ships precompiled binaries, and includes a convenient lispified API with full coverage.
+Unlike other common lisp libraries like cl-glfw, cl-glfw3, and bodge-glfw it is up to date with latest GLFW sources, ships precompiled binaries, includes a convenient lispified API with full coverage, and is actually documented. Wow!
 
 ## How To
-Create a new window instance:
+First, initialize the library:
+
+:: common lisp
+(org.shirakumo.fraf.glfw:init)
+::
+
+And now you can create a new window instance:
 
 :: common lisp
 (make-instance 'org.shirakumo.fraf.glfw:window)
