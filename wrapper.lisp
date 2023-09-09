@@ -216,7 +216,8 @@
 
 (defmethod gamma ((monitor monitor))
   (let* ((ramp (glfw get-gamma-ramp (pointer monitor)))
-         (midpoint (cffi:mem-aref (glfw:gamma-ramp-red ramp) :ushort (truncate (glfw:gamma-ramp-size ramp) 2))))
+         (midpoint (/ (cffi:mem-aref (glfw:gamma-ramp-red ramp) :ushort (truncate (glfw:gamma-ramp-size ramp) 2))
+                      (ash 1 16))))
     (log midpoint 0.5)))
 
 (defmethod (setf gamma) (gamma (monitor monitor))
