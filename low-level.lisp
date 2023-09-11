@@ -511,7 +511,7 @@
 (defglfwfun "glfwWindowHintString" :void ((hint flag) (value :string)))
 (defglfwfun "glfwCreateWindow" :pointer ((width :int) (height :int) (title :string) (monitor :pointer) (share :pointer)))
 (defglfwfun "glfwDestroyWindow" :void ((window :pointer)))
-(defglfwfun "glfwWindowShouldClose" :int ((window :pointer)))
+(defglfwfun "glfwWindowShouldClose" :bool ((window :pointer)))
 (defglfwfun "glfwSetWindowShouldClose" :void ((window :pointer) (value :bool)))
 (defglfwfun "glfwSetWindowTitle" :void ((window :pointer) (title :string)))
 (defglfwfun "glfwSetWindowIcon" :void ((window :pointer) (count :int) (images :pointer)))
