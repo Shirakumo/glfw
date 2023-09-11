@@ -975,5 +975,34 @@ See WINDOW (type)")
 If no monitor is passed, the window's current monitor is used.
 
 See WINDOW (type)
-See MONITOR (type)"))
+See MONITOR (type)")
+
+  (function with-game-loop
+    "Convenience macro to provide a basic single-threaded game loop.
+
+This does the following:
+1. Call INIT
+2. Create a window instance with the given initargs as WINDOW
+3. In a loop perform the following until SHOULD-CLOSE-P:
+   1. Call POLL-EVENTS to handle input events
+   2. Compute the time difference since the last iteration as DT
+   3. Evaluate BODY
+   4. Call SWAP-BUFFERS to display graphics
+4. Call FINALIZE
+
+This provides a standard variable frame rate game loop. You must use
+DT in all your physics steps, or manually slow down the thread to a
+fixed timestep. Please note that correctly implementing physics and
+graphics timestepping can be quite involved however, and this macro is
+only meant for simple tests. You'll want to implement your own system
+based on it at some point.
+
+See WINDOW (type)
+See TIMESTAMP
+See TIMESTAMP-RESOLUTION
+See INIT
+See FINALIZE
+See POLL-EVENTS
+See SWAP-BUFFERS
+See SHOULD-CLOSE-P"))
 

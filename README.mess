@@ -28,7 +28,9 @@ Prior to creating a window instance, you can also manually ``init`` the library 
 
 Once you are done with GLFW as a whole or want to shut everything down at once, you should call ``shutdown``.
 
+The library also provides a simple shorthand macro, ``with-game-loop`` to create a simple variable-frame-rate game loop with window initialisation and all for quick tests and experiments.
+
 ## Direct Access
-This library also provides the ``org.shirakumo.fraf.glfw.cffi`` package, which exposes the raw types and functions exported by the GLFW API. If you need access to functionality not covered by the wrapper or have other needs, you can sue the functions from that package to handle direct access.
+This library also provides the ``org.shirakumo.fraf.glfw.cffi`` package, which exposes the raw types and functions exported by the GLFW API. If you need access to functionality not covered by the wrapper or have other needs, you can use the functions from that package to handle direct access.
 
 You can also mix the wrapper and low level calls by retrieving the ``pointer`` of a window or other ``foreign-object``.

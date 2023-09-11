@@ -332,4 +332,5 @@
    #:swap-interval
    #:cursor
    #:icon
-   #:center))
+   #:center
+   #:with-game-loop))
