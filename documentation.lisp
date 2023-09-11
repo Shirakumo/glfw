@@ -313,6 +313,11 @@ be passed:
   :MONITOR --- The monitor on which to full-screen the window
   :SHARE   --- The context to share with
 
+If you pass the initarg :INITIALIZE-CONTEXT NIL, then the window is
+not initialized, and instead a dead window object is created. You must
+then later call REINITIALIZE-INSTANCE with :INITIALIZE-CONTEXT T
+before the window can be used.
+
 In order to react to events sent to the window, you should create a
 subclass and implement methods on the following functions. By default
 the corresponding events are simply discarded.

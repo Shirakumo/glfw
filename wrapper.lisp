@@ -258,32 +258,40 @@
    (cursor :initform NIL)
    (icon :initform () :accessor icon)))
 
-(defmethod initialize-instance :after ((window window) &rest args &key monitor share
-                                                                       resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id)
+(defmethod initialize-instance :around ((window window) &rest args &key (initialize-context T initialize-p) &allow-other-keys)
+  (if initialize-p
+      (call-next-method)
+      (apply #'call-next-method window :initialize-context initialize-context args)))
+
+(defmethod shared-initialize :after ((window window) slots &rest args &key initialize-context monitor share
+                                                                    resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id)
   (declare (ignore resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id))
-  (loop for (k v) on args by #'cddr
-        unless (find k '(:width :height :title :monitor :share))
-        do (with-simple-restart (continue "Ignore the window hint.")
-             (if (stringp v)
-                 (glfw window-hint-string k v)
-                 (glfw window-hint k (flag-value v)))))
-  (let ((pointer (float-features:with-float-traps-masked T
-                   (glfw create-window
-                         (width window)
-                         (height window)
-                         (title window)
-                         (if monitor (pointer monitor) (cffi:null-pointer))
-                         (if share (pointer share) (cffi:null-pointer)))))
-        ok)
-    (setf (pointer window) pointer)
-    (unwind-protect
-         (progn
-           (setf (ptr-object pointer) window)
-           (register-callbacks window)
-           (make-current window)
-           (setf ok T))
-      (unless ok
-        (destroy window)))))
+  (when initialize-context
+    (when (pointer window)
+      (error "The window is already initialized."))
+    (loop for (k v) on args by #'cddr
+          unless (find k '(:width :height :title :monitor :share))
+          do (with-simple-restart (continue "Ignore the window hint.")
+               (if (stringp v)
+                   (glfw window-hint-string k v)
+                   (glfw window-hint k (flag-value v)))))
+    (let ((pointer (float-features:with-float-traps-masked T
+                     (glfw create-window
+                           (width window)
+                           (height window)
+                           (title window)
+                           (if monitor (pointer monitor) (cffi:null-pointer))
+                           (if share (pointer share) (cffi:null-pointer)))))
+          ok)
+      (setf (pointer window) pointer)
+      (unwind-protect
+           (progn
+             (setf (ptr-object pointer) window)
+             (register-callbacks window)
+             (make-current window)
+             (setf ok T))
+        (unless ok
+          (destroy window))))))
 
 (defmethod print-object ((window window) stream)
   (print-unreadable-object (window stream :type T)
