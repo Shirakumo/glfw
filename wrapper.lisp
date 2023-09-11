@@ -264,17 +264,19 @@
       (apply #'call-next-method window :initialize-context initialize-context args)))
 
 (defmethod shared-initialize :after ((window window) slots &rest args &key initialize-context monitor share
-                                                                    resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id)
+                                                                    resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id allow-other-keys)
   (declare (ignore resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id))
   (when initialize-context
     (when (pointer window)
       (error "The window is already initialized."))
     (loop for (k v) on args by #'cddr
-          unless (find k '(:width :height :title :monitor :share))
+          unless (find k '(:width :height :title :monitor :share :initialize-context))
           do (with-simple-restart (continue "Ignore the window hint.")
-               (if (stringp v)
-                   (glfw window-hint-string k v)
-                   (glfw window-hint k (flag-value v)))))
+               (when (or (find k (cffi:foreign-enum-keyword-list 'glfw:flag))
+                         (null allow-other-keys))
+                 (if (stringp v)
+                     (glfw window-hint-string k v)
+                     (glfw window-hint k (flag-value v))))))
     (when (eql T (width window))
       (let ((mode (video-mode (primary-monitor))))
         (setf (width window) (first mode))
