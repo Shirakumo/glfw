@@ -443,7 +443,7 @@
 (defglfwcallback framebuffer-resized :void ((window :pointer) (width :int) (height :int)))
 (defglfwcallback window-content-scale-changed :void ((window :pointer) (xscale :float) (yscale :float)))
 (defglfwcallback mouse-button-changed :void ((window :pointer) (button mouse-button) (action key-state) (modifiers modifier)))
-(defglfwcallback mouse-moved :void ((window :pointer) (xpos :int) (ypos :int)))
+(defglfwcallback mouse-moved :void ((window :pointer) (xpos :double) (ypos :double)))
 (defglfwcallback mouse-entered :void ((window :pointer) (entered :bool)))
 (defglfwcallback mouse-scrolled :void ((window :pointer) (xoffset :double) (yoffset :double)))
 (defglfwcallback key-changed :void ((window :pointer) (key key) (scan-code :int) (action key-state) (modifiers modifier)))
