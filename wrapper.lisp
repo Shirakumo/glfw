@@ -638,3 +638,10 @@
                    do (setf (cffi:mem-aref pixel-data :char p) pixel)
                       (incf p)))
     (glfw set-window-icon (pointer window) (length icons) images)))
+
+(defmethod center ((window window) &optional (monitor (monitor window)))
+  (let ((mode (video-mode monitor)))
+    (destructuring-bind (x y) (location monitor)
+      (destructuring-bind (w h) (size window)
+        (setf (size window) (list (+ x (floor (- (first mode) w) 2))
+                                  (+ y (floor (- (second mode) h) 2))))))))

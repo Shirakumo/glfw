@@ -962,5 +962,13 @@ format (PIXELS WIDTH HEIGHT), and where pixels is a
  (simple-array (unsigned-byte 8) (*)) with the length (* width height 4)
 holding the RGBA encoded pixel data of the icon, top-left aligned.
 
-See WINDOW (type)"))
+See WINDOW (type)")
+
+  (function center
+    "Centers the window on the given monitor.
+
+If no monitor is passed, the window's current monitor is used.
+
+See WINDOW (type)
+See MONITOR (type)"))
 

@@ -331,4 +331,5 @@
    #:swap-buffers
    #:swap-interval
    #:cursor
-   #:icon))
+   #:icon
+   #:center))
