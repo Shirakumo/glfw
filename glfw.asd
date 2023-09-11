@@ -13,4 +13,5 @@
                (:file "wrapper")
                (:file "documentation"))
   :depends-on (:documentation-utils
+               :float-features
                :cffi))

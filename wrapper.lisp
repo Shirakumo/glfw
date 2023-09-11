@@ -267,12 +267,13 @@
              (if (stringp v)
                  (glfw window-hint-string k v)
                  (glfw window-hint k (flag-value v)))))
-  (let ((pointer (glfw create-window
-                       (width window)
-                       (height window)
-                       (title window)
-                       (if monitor (pointer monitor) (cffi:null-pointer))
-                       (if share (pointer share) (cffi:null-pointer))))
+  (let ((pointer (float-features:with-float-traps-masked T
+                   (glfw create-window
+                         (width window)
+                         (height window)
+                         (title window)
+                         (if monitor (pointer monitor) (cffi:null-pointer))
+                         (if share (pointer share) (cffi:null-pointer)))))
         ok)
     (setf (pointer window) pointer)
     (unwind-protect
@@ -574,13 +575,19 @@
   (glfw:get-timer-frequency))
 
 (defmethod make-current ((window window))
-  (glfw make-context-current (pointer window)))
+  (float-features:with-float-traps-masked T
+    (glfw make-context-current (pointer window))))
+
+(defmethod make-current ((null null))
+  (float-features:with-float-traps-masked T
+    (glfw make-context-current (cffi:null-pointer))))
 
 (defmethod get-current ()
   (ptr-object (glfw get-current-context)))
 
 (defmethod swap-buffers ((window window))
-  (glfw swap-buffers (pointer window)))
+  (float-features:with-float-traps-masked T
+    (glfw swap-buffers (pointer window))))
 
 (defmethod (setf swap-interval) :before (interval (window window))
   (glfw swap-interval interval))
