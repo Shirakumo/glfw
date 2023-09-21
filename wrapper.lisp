@@ -1,7 +1,6 @@
 (in-package #:org.shirakumo.fraf.glfw)
 
 (defvar *object-table* (make-hash-table :test 'eql))
-(defvar *cursor-table* (make-hash-table :test 'eql))
 (defvar *monitors* ())
 (defvar *initialized* NIL)
 
@@ -103,16 +102,10 @@
     (format stream "~a" (name cursor))))
 
 (defmethod initialize-instance :after ((cursor standard-cursor) &key)
-  (setf (pointer cursor) (glfw create-standard-cursor (or (name cursor) :arrow)))
-  (setf (gethash (name cursor) *cursor-table*) cursor))
-
-(defmethod cursor ((name symbol))
-  (or (gethash name *cursor-table*)
-      (make-instance 'standard-cursor :name name)))
+  (setf (pointer cursor) (glfw create-standard-cursor (or (name cursor) :arrow))))
 
 (defmethod destroy ((cursor standard-cursor))
   (when (pointer cursor)
-    (remhash (name cursor) *cursor-table*)
     (setf (pointer cursor) NIL)))
 
 (defclass monitor (foreign-object)
@@ -256,6 +249,7 @@
    (swap-interval :initform 0 :accessor swap-interval)
    (title :initarg :title :initform "GLFW" :accessor title)
    (cursor :initform NIL)
+   (cursor-table :initform (make-hash-table :test 'eql) :accessor cursor-table)
    (icon :initform () :accessor icon)))
 
 (defmethod initialize-instance :around ((window window) &rest args &key (initialize-context T initialize-p) &allow-other-keys)
@@ -331,6 +325,9 @@
 
 (defmethod destroy ((window window))
   (when (pointer window)
+    (loop for cursor being the hash-values of (cursor-table window)
+          do (destroy cursor))
+    (clrhash (cursor-table window))
     (setf (ptr-object (pointer window)) NIL)
     (glfw destroy-window (pointer window))
     (setf (pointer window) NIL)))
@@ -641,8 +638,9 @@
   (glfw set-cursor (pointer window) (pointer cursor))
   (setf (slot-value window 'cursor) cursor))
 
-(defmethod (setf cursor) (thing (window window))
-  (setf (cursor window) (cursor thing)))
+(defmethod (setf cursor) ((name symbol) (window window))
+  (setf (cursor window) (or (gethash name (cursor-table window))
+                            (make-instance 'standard-cursor :name name))))
 
 (defmethod (setf icon) :before (icons (window window))
   (cffi:with-foreign-objects ((images '(:struct glfw:image) (length icons))
