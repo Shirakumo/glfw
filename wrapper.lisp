@@ -103,7 +103,7 @@
     (format stream "~a" (name cursor))))
 
 (defmethod initialize-instance :after ((cursor standard-cursor) &key)
-  (setf (pointer cursor) (glfw create-standard-cursor (name cursor)))
+  (setf (pointer cursor) (glfw create-standard-cursor (or (name cursor) :arrow)))
   (setf (gethash (name cursor) *cursor-table*) cursor))
 
 (defmethod cursor ((name symbol))
