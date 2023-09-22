@@ -14,7 +14,7 @@
   value)
 
 (defun glfw:resolve-window (ptr)
-  (gethash (cffi:pointer-address ptr) *object-table*))
+  (values (gethash (cffi:pointer-address ptr) *object-table*)))
 
 (defmacro extract-values (bindings &body body)
   `(cffi:with-foreign-objects ,bindings
