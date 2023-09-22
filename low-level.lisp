@@ -29,7 +29,12 @@
 (cffi:defcenum (mouse-button :int :allow-other-keys T)
   (:left               0)
   (:right              1)
-  (:middle             2))
+  (:middle             2)
+  (:button-4           3)
+  (:button-5           4)
+  (:button-6           5)
+  (:button-7           6)
+  (:button-8           7))
 
 (cffi:defcenum (key :int :allow-other-keys T)
   (:unknown            -1)
@@ -320,7 +325,7 @@
 
   (:connected              #x00040001)
   (:disconnected           #x00040002)
-  
+
   (:joystick-hat-buttons   #x00050001)
   (:angle-platform-type    #x00050002)
   (:platform               #x00050003)
