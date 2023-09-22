@@ -392,13 +392,13 @@
   (user :pointer))
 
 ;;; Callbacks
-(defun resolve-window (window)
-  window)
+(declaim (ftype (function (t) (values t &optional nil))
+                resolve-window))
 
 (defmacro defglfwcallback (name return args)
   `(progn
      (defgeneric ,name ,(mapcar #'first args))
-     
+
      (cffi:defcallback ,name ,return ,args
        (restart-case
            (let ((window-ptr window)
