@@ -26,7 +26,7 @@
   (:down               #x04)
   (:left               #x08))
 
-(cffi:defcenum (mouse-button :int :allow-other-keys T)
+(cffi:defcenum (mouse-button :int :allow-undeclared-values T)
   (:left               0)
   (:right              1)
   (:middle             2)
@@ -36,7 +36,7 @@
   (:button-7           6)
   (:button-8           7))
 
-(cffi:defcenum (key :int :allow-other-keys T)
+(cffi:defcenum (key :int :allow-undeclared-values T)
   (:unknown            -1)
   (:space              32)
   (:apostrophe         39)
@@ -192,7 +192,7 @@
   (:l2                 4)
   (:r2                 5))
 
-(cffi:defcenum (error :int :allow-other-keys T)
+(cffi:defcenum (error :int :allow-undeclared-values T)
   (:no-error               0)
   (:not-initialized        #x00010001)
   (:no-current-context     #x00010002)
@@ -209,7 +209,7 @@
   (:feature-unimplemented  #x0001000d)
   (:platform-unavailable   #x0001000e))
 
-(cffi:defcenum (flag :int :allow-other-keys T)
+(cffi:defcenum (flag :int :allow-undeclared-values T)
   ;; (NIL                               0)
   ;; (T                                 1)
   (:focused                 #x00020001)
