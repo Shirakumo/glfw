@@ -764,11 +764,13 @@ The state may be one of the following:
   :ICONIFIED
   :HIDDEN
   :MAXIMIZED
+  :FULLSCREEN
   :NORMAL
 
 See ICONIFIED-P
 See MAXIMIZED-P
 See VISIBLE-P
+See MONITOR
 See WINDOW (type)")
   
   (function iconify

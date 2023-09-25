@@ -463,6 +463,8 @@
          :hidden)
         ((maximized-p window)
          :maximized)
+        ((not (cffi:null-pointer-p (glfw get-window-monitor (pointer window))))
+         :fullscreen)
         (T
          :normal)))
 
@@ -473,9 +475,15 @@
     (:hidden
      (hide window))
     (:maximized
+     (unless (cffi:null-pointer-p (glfw get-window-monitor (pointer window)))
+       (setf (monitor window) NIL))
      (maximize window))
+    (:fullscreen
+     (setf (monitor window) (monitor window)))
     (:normal
      (show window)
+     (unless (cffi:null-pointer-p (glfw get-window-monitor (pointer window)))
+       (setf (monitor window) NIL))
      (restore window))))
 
 (defmethod iconify ((window window))
