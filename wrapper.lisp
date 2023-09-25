@@ -383,7 +383,7 @@
     pos))
 
 (defmethod size ((window window))
-  (cons (width window) (height window)))
+  (list (width window) (height window)))
 
 (defmethod (setf size) (size (window window))
   (destructuring-bind (w h) size
