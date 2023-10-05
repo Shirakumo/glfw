@@ -316,7 +316,7 @@
     (glfw:set-framebuffer-size-callback pointer (cffi:callback glfw:framebuffer-resized))
     (glfw:set-window-content-scale-callback pointer (cffi:callback glfw:window-content-scale-changed))
     (glfw:set-key-callback pointer (cffi:callback glfw:key-changed))
-    (glfw:set-char-mods-callback pointer (cffi:callback glfw:char-entered))
+    (glfw:set-char-callback pointer (cffi:callback glfw:char-entered))
     (glfw:set-mouse-button-callback pointer (cffi:callback glfw:mouse-button-changed))
     (glfw:set-cursor-pos-callback pointer (cffi:callback glfw:mouse-moved))
     (glfw:set-cursor-enter-callback pointer (cffi:callback glfw:mouse-entered))
@@ -361,7 +361,7 @@
 (defmethod mouse-entered ((window window) entered))
 (defmethod mouse-scrolled ((window window) xoffset yoffset))
 (defmethod key-changed ((window window) key scan-code action modifiers))
-(defmethod char-entered ((window window) code-point modifiers))
+(defmethod char-entered ((window window) code-point))
 (defmethod file-dropped ((window window) paths))
 
 (defmethod should-close-p ((window window))

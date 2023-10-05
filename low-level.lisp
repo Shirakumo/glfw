@@ -452,7 +452,7 @@
 (defglfwcallback mouse-entered :void ((window :pointer) (entered :bool)))
 (defglfwcallback mouse-scrolled :void ((window :pointer) (xoffset :double) (yoffset :double)))
 (defglfwcallback key-changed :void ((window :pointer) (key key) (scan-code :int) (action key-state) (modifiers modifier)))
-(defglfwcallback char-entered :void ((window :pointer) (code-point :uint) (modifiers modifier)))
+(defglfwcallback char-entered :void ((window :pointer) (code-point :uint)))
 
 (defgeneric file-dropped (window paths))
 (cffi:defcallback file-dropped :void ((window :pointer) (path-count :int) (paths :pointer))
@@ -606,7 +606,7 @@
 (defglfwfun "glfwSetWindowContentScaleCallback" :pointer ((window :pointer) (callback :pointer)))
 (defglfwfun "glfwSetKeyCallback" :pointer ((window :pointer) (callback :pointer)))
 (defglfwfun "glfwSetCharCallback" :pointer ((window :pointer) (callback :pointer)))
-(defglfwfun "glfwSetCharModsCallback" :pointer ((window :pointer) (callback :pointer)))
+(defglfwfun "glfwSetCharModsCallback" :pointer ((window :pointer) (callback :pointer))) ;; DEPRECATED: upstream deprecation https://www.glfw.org/docs/3.3/deprecated.html
 (defglfwfun "glfwSetMouseButtonCallback" :pointer ((window :pointer) (callback :pointer)))
 (defglfwfun "glfwSetCursorPosCallback" :pointer ((window :pointer) (callback :pointer)))
 (defglfwfun "glfwSetCursorEnterCallback" :pointer ((window :pointer) (callback :pointer)))
