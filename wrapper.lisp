@@ -387,9 +387,11 @@
 
 (defmethod (setf size) (size (window window))
   (destructuring-bind (w h) size
-    (glfw set-window-size (pointer window) w h)
-    (setf (slot-value window 'width) w)
-    (setf (slot-value window 'height) h)
+    (let ((w (max 1 (ceiling w)))
+          (h (max 1 (ceiling h))))
+      (glfw set-window-size (pointer window) w h)
+      (setf (slot-value window 'width) w)
+      (setf (slot-value window 'height) h))
     size))
 
 (defmethod (setf width) (size (window window))
