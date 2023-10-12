@@ -120,7 +120,7 @@
 (defmethod list-video-modes ((monitor monitor))
   (cffi:with-foreign-object (count :int)
     (let ((array (glfw get-video-modes (pointer monitor) count)))
-      (loop for i from 0 below (print (cffi:mem-ref count :int))
+      (loop for i from 0 below (cffi:mem-ref count :int)
             for ptr = (cffi:mem-aptr array '(:struct glfw:video-mode) i)
             collect (list (glfw:video-mode-width ptr)
                           (glfw:video-mode-height ptr)
