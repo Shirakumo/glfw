@@ -38,10 +38,14 @@
 
 (defmacro glfw (call &rest args)
   `(prog1 (,(find-symbol (string call) "GLFW") ,@args)
-     (cffi:with-foreign-objects ((str :pointer))
-       (let ((code (glfw:get-error str)))
+     (cffi:with-foreign-objects ((str :pointer)
+				 (str-address :pointer))
+       (setf (cffi:mem-aref str-address :pointer) str)
+       (let ((code (glfw:get-error str-address)))
          (unless (eql :no-error code)
-           (error 'glfw-error :operation ',call :code code :message (cffi:foreign-string-to-lisp str :encoding :utf-8)))))))
+           (error 'glfw-error :operation ',call :code code 
+		  :message (cffi:foreign-string-to-lisp (cffi:mem-aref str-address :pointer) :encoding :utf-8)))))))
+
 
 (defun init (&rest args &key platform joystick-hat-buttons angle-platform-type cocoa-chdir-resources cocoa-menubar x11-xcb-vulkan-surface)
   (declare (ignore platform joystick-hat-buttons angle-platform-type cocoa-chdir-resources cocoa-menubar x11-xcb-vulkan-surface))
