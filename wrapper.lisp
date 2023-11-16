@@ -277,8 +277,8 @@
                      (glfw window-hint k (flag-value v))))))
     (when (eql T (width window))
       (let ((mode (video-mode (primary-monitor))))
-        (setf (width window) (first mode))
-        (setf (height window) (second mode))))
+        (setf (slot-value window 'width) (first mode))
+        (setf (slot-value window 'height) (second mode))))
     (let ((pointer (float-features:with-float-traps-masked T
                      (glfw create-window
                            (width window)
