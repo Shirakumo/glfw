@@ -34,4 +34,4 @@ all:
 	mkdir -p build ../static
 	cmake -B build/ -DCMAKE_BUILD_TYPE=ReleaseWithDebug -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_C_FLAGS="$(CFLAGS)" $(CMAKEFLAGS)
 	$(MAKE) -C build
-	cp build/src/*glfw*.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT)
+	cp build/src/*glfw.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT)
