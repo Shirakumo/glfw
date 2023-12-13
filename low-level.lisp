@@ -474,7 +474,32 @@
   (restart-case (let ((window-ptr window) (window (resolve-window window)))
                   (if window
                       ;; Special handling to decode the message
-                      (debug-log window source type id severity (cffi:foreign-string-to-lisp message :count length))
+                      (debug-log window
+                                 (case source
+                                   (:debug-source-api-khr :api)
+                                   (:debug-source-window-system-khr :window-system)
+                                   (:debug-source-shader-compiler-khr :shader-compiler)
+                                   (:debug-source-third-party-khr :third-party)
+                                   (:debug-source-application-khr :application)
+                                   (:debug-source-other-khr :other)
+                                   (T source))
+                                 (case type
+                                   (:debug-type-error-khr :error)
+                                   (:debug-type-deprecated-behavior-khr :deprecated-behavior)
+                                   (:debug-type-undefined-behavior-khr :undefined-behavior)
+                                   (:debug-type-portability-khr :portability)
+                                   (:debug-type-performance-khr :performance)
+                                   (:debug-type-other-khr :other)
+                                   (:debug-type-marker-khr :marker)
+                                   (T type))
+                                 id
+                                 (case severity
+                                   (:debug-severity-high-khr :high)
+                                   (:debug-severity-medium-khr :medium)
+                                   (:debug-severity-low-khr :low)
+                                   (:debug-severity-notification-khr :notification)
+                                   (T severity))
+                                 (cffi:foreign-string-to-lisp message :count length))
                       (format *error-output*
                               "~&[GLFW] ~a callback to unmapped window pointer ~8,'0x, ignoring.~%"
                               'file-dropped (cffi-sys:pointer-address window-ptr))))

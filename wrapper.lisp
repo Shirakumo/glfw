@@ -371,7 +371,7 @@
 (defmethod file-dropped ((window window) paths))
 
 (defmethod debug-log ((window window) source type id severity message)
-  (format *error-output* "[GL] [~a] ~8,'0d ~a: ~a ~a" severity id source type message))
+  (format *error-output* "~&[GL/~a] [~a] ~8,'0d ~a~%" source type id message))
 
 (defmethod should-close-p ((window window))
   (glfw:window-should-close (pointer window)))
