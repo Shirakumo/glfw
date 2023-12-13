@@ -468,6 +468,20 @@
       :report "Abort the callback."
       NIL)))
 
+(defgeneric debug-log (window source type id severity message))
+(cffi:defcallback debug-log :void ((source %gl::enum) (type %gl::enum) (id :uint) (severity %gl::enum)
+                                   (length :size) (message :pointer) (window :pointer))
+  (restart-case (let ((window-ptr window) (window (resolve-window window)))
+                  (if window
+                      ;; Special handling to decode the message
+                      (debug-log window source type id severity (cffi:foreign-string-to-lisp message :count length))
+                      (format *error-output*
+                              "~&[GLFW] ~a callback to unmapped window pointer ~8,'0x, ignoring.~%"
+                              'file-dropped (cffi-sys:pointer-address window-ptr))))
+    (abort ()
+      :report "Abort the callback."
+      NIL)))
+
 ;;; Main interface
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun translate-name (name)

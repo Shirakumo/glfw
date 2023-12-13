@@ -66,6 +66,7 @@
    #:key-changed
    #:char-entered
    #:file-dropped
+   #:debug-log
    #:init
    #:terminate
    #:init-hint
@@ -239,7 +240,8 @@
    #:mouse-scrolled
    #:key-changed
    #:char-entered
-   #:file-dropped)
+   #:file-dropped
+   #:debug-log)
   (:export
    #:glfw-error
    #:operation
@@ -295,6 +297,7 @@
    #:key-changed
    #:char-entered
    #:file-dropped
+   #:debug-log
    #:should-close-p
    #:location
    #:size

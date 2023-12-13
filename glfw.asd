@@ -14,4 +14,5 @@
                (:file "documentation"))
   :depends-on (:documentation-utils
                :float-features
+               :cl-opengl
                :cffi))

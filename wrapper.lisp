@@ -263,7 +263,7 @@
 
 (defmethod shared-initialize :after ((window window) slots &rest args &key initialize-context monitor share
                                                                     resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id allow-other-keys)
-  (declare (ignore resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat context-debug opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id))
+  (declare (ignore resizable visible decorated focused auto-iconify floating maximized center-cursor transparent-framebuffer focus-on-show scale-to-monitor mouse-passthrough red-bits green-bits blue-bits alpha-bits depth-bits stencil-bits accum-red-bits accum-green-bits accum-blue-bits accum-alpha-bits aux-buffers stereo samples srgb-capable doublebuffer refresh-rate client-api context-creation-api context-version-major context-version-minor opengl-forward-compat opengl-profile context-robustness context-release-behavior context-no-error win32-keyboard-menu cocoa-retina-framebuffer cocoa-frame-name cocoa-graphics-switching x11-class-name x11-instance-name wayland-app-id))
   (when initialize-context
     (when (pointer window)
       (error "The window is already initialized."))
@@ -293,6 +293,8 @@
              (setf (ptr-object pointer) window)
              (register-callbacks window)
              (make-current window)
+             (when context-debug
+               (%gl:debug-message-callback (cffi:callback glfw:debug-log) pointer))
              (setf ok T))
         (unless ok
           (destroy window))))))
@@ -367,6 +369,9 @@
 (defmethod key-changed ((window window) key scan-code action modifiers))
 (defmethod char-entered ((window window) code-point))
 (defmethod file-dropped ((window window) paths))
+
+(defmethod debug-log ((window window) source type id severity message)
+  (format *error-output* "[GL] [~a] ~8,'0d ~a: ~a ~a" severity id source type message))
 
 (defmethod should-close-p ((window window))
   (glfw:window-should-close (pointer window)))
