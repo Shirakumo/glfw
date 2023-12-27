@@ -554,11 +554,16 @@
   (destructuring-bind (monitor &key width height (x 0) (y 0) refresh-rate) monitor
     (when (eql T monitor)
       (setf monitor (primary-monitor)))
-    (if monitor
-        (glfw set-window-monitor (pointer window) (pointer monitor)
-              x y (or width (width monitor)) (or height (height monitor)) (or refresh-rate (refresh-rate monitor)))
-        (glfw set-window-monitor (pointer window) (cffi:null-pointer)
-              x y (or width (width window)) (or height (height window)) -1)))
+    (cond (monitor
+           (glfw set-window-monitor (pointer window) (pointer monitor)
+                 x y (or width (width monitor)) (or height (height monitor)) (or refresh-rate (refresh-rate monitor)))
+           (setf (slot-value window 'width) (width window))
+           (setf (slot-value window 'height) (height window)))
+          (T
+           (glfw set-window-monitor (pointer window) (cffi:null-pointer)
+                 x y (or width (width window)) (or height (height window)) -1)
+           (setf (slot-value window 'width) (width window))
+           (setf (slot-value window 'height) (height window)))))
   monitor)
 
 (defmethod (setf monitor) ((default (eql T)) (window window))
