@@ -685,8 +685,8 @@
   (let ((mode (video-mode monitor)))
     (destructuring-bind (x y) (location monitor)
       (destructuring-bind (w h) (size window)
-        (setf (size window) (list (+ x (floor (- (first mode) w) 2))
-                                  (+ y (floor (- (second mode) h) 2))))))))
+        (setf (location window) (list (+ x (floor (- (first mode) w) 2))
+                                      (+ y (floor (- (second mode) h) 2))))))))
 
 (defmacro with-game-loop ((window dt &rest initargs) &body body)
   (let ((last-time (gensym "LAST-TIME"))
