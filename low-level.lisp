@@ -9,9 +9,11 @@
                 #+X86-64 "libglfw-mac-amd64.dylib"
                 #+ARM64 "libglfw-mac-arm64.dylib"))
   (:unix (:or #+X86 "libglfw-lin-i686.so"
-              #+X86-64 "libglfw-lin-amd64.so"))
+              #+X86-64 "libglfw-lin-amd64.so"
+              #+ARM64 "libglfw-lin-arm64.so"))
   (:windows (:or #+X86 "libglfw-win-i686.dll"
-                 #+X86-64 "libglfw-win-amd64.dll"))
+                 #+X86-64 "libglfw-win-amd64.dll"
+                 #+ARM64 "libglfw-win-arm64.so"))
   (T (:or (:default "libglfw3") (:default "glfw3") (:default "libglfw") (:default "glfw"))))
 
 (cffi:defcenum key-state

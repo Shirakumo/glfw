@@ -6,20 +6,19 @@ EXT = so
 UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_M),x86_64)
 	ARCH = amd64
-endif
-ifneq ($(filter %86,$(UNAME_M)),)
+else ifneq ($(filter %86,$(UNAME_M)),)
 	ARCH = i686
-endif
-ifneq ($(filter arm%,$(UNAME_M)),)
+else ifeq ($(UNAME_M),aarch64)
 	ARCH = arm64
+else ifneq ($(filter %arm,$(UNAME_M)),)
+	ARCH = arm
 endif
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	ifeq ($(ARCH),amd64)
 		CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.9_x64.h"
-	endif
-	ifeq ($(ARCH),i686)
+	else ifeq ($(ARCH),i686)
 		CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.9_x86.h"
 	endif
 	CMAKEFLAGS += -DGLFW_USE_WAYLAND=1
