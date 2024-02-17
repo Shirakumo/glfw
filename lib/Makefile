@@ -21,7 +21,7 @@ ifeq ($(UNAME_S),Linux)
 	else ifeq ($(ARCH),i686)
 		CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.9_x86.h"
 	endif
-	CMAKEFLAGS += -DGLFW_USE_WAYLAND=1
+	CMAKEFLAGS += -DGLFW_BUILD_WAYLAND=1 -DGLFW_BUILD_X11=1
 	OS = lin
 endif
 ifeq ($(UNAME_S),Darwin)
