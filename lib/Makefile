@@ -64,12 +64,17 @@ ifeq ($(OS),win)
 	endif
 endif
 
+BUILDDIR ?= build-$(OS)-$(ARCH)
+
 all:
-	mkdir -p build ../static
-	cmake -B build/ -DCMAKE_BUILD_TYPE=ReleaseWithDebug -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_C_FLAGS="$(CFLAGS)" $(CMAKEFLAGS)
-	$(MAKE) -C build
+	mkdir -p $(BUILDDIR) ../static
+	cmake -B $(BUILDDIR)/ -DCMAKE_BUILD_TYPE=ReleaseWithDebug -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_C_FLAGS="$(CFLAGS)" $(CMAKEFLAGS)
+	$(MAKE) -C $(BUILDDIR)
 	@if [ "${OS}" = "win" ]; then \
-		cp build/src/glfw3.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT); \
+		cp $(BUILDDIR)/src/glfw3.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT); \
 	else \
-		cp build/src/libglfw.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT); \
+		cp $(BUILDDIR)/src/libglfw.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT); \
 	fi
+
+clean:
+	rm -r $(BUILDDIR)
