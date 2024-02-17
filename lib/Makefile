@@ -1,9 +1,10 @@
-ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-OS = misc
-ARCH = misc
-EXT = so
+ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 UNAME_M := $(shell uname -m)
+UNAME_S := $(shell uname -s)
+
+# Autodetect architecture
+ifeq ($(ARCH),)
 ifeq ($(UNAME_M),x86_64)
 	ARCH = amd64
 else ifneq ($(filter %86,$(UNAME_M)),)
@@ -12,29 +13,63 @@ else ifeq ($(UNAME_M),aarch64)
 	ARCH = arm64
 else ifneq ($(filter %arm,$(UNAME_M)),)
 	ARCH = arm
+else
+	ARCH = misc
+endif
 endif
 
-UNAME_S := $(shell uname -s)
+# Autodetect OS
+ifeq ($(OS),)
 ifeq ($(UNAME_S),Linux)
+	OS = lin
+else ifeq ($(UNAME_S),Darwin)
+	OS = mac
+else ifneq ($(filter MINGW%,$(UNAME_S)),)
+	OS = win
+else
+	OS = misc
+endif
+endif
+
+# Setup extension and flags
+ifeq ($(OS),win)
+	CMAKEFLAGS += -G "MSYS Makefiles"
+	EXT ?= dll
+else ifeq ($(OS),mac)
+	EXT ?= dylib
+else ifeq ($(OS),lin)
 	ifeq ($(ARCH),amd64)
 		CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.9_x64.h"
 	else ifeq ($(ARCH),i686)
 		CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.9_x86.h"
 	endif
 	CMAKEFLAGS += -DGLFW_BUILD_WAYLAND=1 -DGLFW_BUILD_X11=1
-	OS = lin
+	EXT ?= so
+else
+	EXT ?= so
 endif
-ifeq ($(UNAME_S),Darwin)
-	OS = mac
-	EXT = dylib
+
+# Set up cross-compilation
+ifeq ($(OS),win)
+	ifeq ($(UNAME_S),Linux)
+		ifeq ($(ARCH),amd64)
+			CMAKEFLAGS = -DCMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake
+		else ifeq ($(ARCH),i686)
+			CMAKEFLAGS = -DCMAKE_TOOLCHAIN_FILE=CMake/i686-w64-mingw32.cmake
+		else
+			$(error "Can't cross-compile from $(UNAME_S) to $(OS)/$(ARCH)")
+		endif
+	else
+		$(error "Can't cross-compile from $(UNAME_S) to $(OS)/$(ARCH)")
+	endif
 endif
-ifneq ($(filter MINGW%,$(UNAME_S)),)
-	OS = win
-	EXT = dll
-	CMAKEFLAGS += -G "MSYS Makefiles"
-endif
+
 all:
 	mkdir -p build ../static
 	cmake -B build/ -DCMAKE_BUILD_TYPE=ReleaseWithDebug -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_C_FLAGS="$(CFLAGS)" $(CMAKEFLAGS)
 	$(MAKE) -C build
-	cp build/src/*glfw.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT)
+	@if [ "${OS}" = "win" ]; then \
+		cp build/src/glfw3.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT); \
+	else \
+		cp build/src/libglfw.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT); \
+	fi
