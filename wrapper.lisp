@@ -703,7 +703,7 @@
                     do (poll-events)
                        (let* ((,window ,window)
                               (,new-time (timestamp))
-                              (,dt (* (- new-time last-time) ,time-resolution)))
+                              (,dt (* (- ,new-time ,last-time) ,time-resolution)))
                          (declare (type (unsigned-byte 64) ,new-time))
                          (setf ,last-time ,new-time)
                          ,@body)
