@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.5 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2018 Camilla Löwy <elmindreda@glfw.org>
@@ -50,11 +50,11 @@ static const struct
 #if defined(_GLFW_COCOA)
     { GLFW_PLATFORM_COCOA, _glfwConnectCocoa },
 #endif
-#if defined(_GLFW_X11)
-    { GLFW_PLATFORM_X11, _glfwConnectX11 },
-#endif
 #if defined(_GLFW_WAYLAND)
     { GLFW_PLATFORM_WAYLAND, _glfwConnectWayland },
+#endif
+#if defined(_GLFW_X11)
+    { GLFW_PLATFORM_X11, _glfwConnectX11 },
 #endif
 };
 

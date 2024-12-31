@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 Wayland - www.glfw.org
+// GLFW 3.5 Wayland - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
 //
@@ -137,6 +137,13 @@ static void registryHandleGlobal(void* userData,
                 wl_registry_bind(registry, name, &wl_seat_interface,
                                  _glfw_min(4, version));
             _glfwAddSeatListenerWayland(_glfw.wl.seat);
+
+            if (wl_seat_get_version(_glfw.wl.seat) >=
+                WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION)
+            {
+                _glfw.wl.keyRepeatTimerfd =
+                    timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+            }
         }
     }
     else if (strcmp(interface, "wl_data_device_manager") == 0)
@@ -704,6 +711,10 @@ int _glfwInitWayland(void)
         _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_compose_state_get_status");
     _glfw.wl.xkb.compose_state_get_one_sym = (PFN_xkb_compose_state_get_one_sym)
         _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_compose_state_get_one_sym");
+    _glfw.wl.xkb.keysym_to_utf32 = (PFN_xkb_keysym_to_utf32)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_keysym_to_utf32");
+    _glfw.wl.xkb.keysym_to_utf8 = (PFN_xkb_keysym_to_utf8)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_keysym_to_utf8");
 
     if (!_glfw.wl.xkb.context_new ||
         !_glfw.wl.xkb.context_unref ||
@@ -851,12 +862,6 @@ int _glfwInitWayland(void)
                                      &libdecorReadyListener,
                                      NULL);
         }
-    }
-
-    if (wl_seat_get_version(_glfw.wl.seat) >= WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION)
-    {
-        _glfw.wl.keyRepeatTimerfd =
-            timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
     }
 
     if (!_glfw.wl.wmBase)
