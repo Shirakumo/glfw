@@ -511,6 +511,14 @@ should also declare this in its `Info.plist` by setting the
 `NSSupportsAutomaticGraphicsSwitching` key to `true`.
 
 
+#### Wayland specific window hints {#window_hints_wayland}
+
+@anchor GLFW_WAYLAND_APP_ID_hint
+__GLFW_WAYLAND_APP_ID__ specifies the Wayland app_id for a window, used
+by window managers to identify types of windows. This is set with
+@ref glfwWindowHintString.
+
+
 #### X11 specific window hints {#window_hints_x11}
 
 @anchor GLFW_X11_CLASS_NAME_hint
@@ -519,13 +527,6 @@ __GLFW_X11_CLASS_NAME__ and __GLFW_X11_INSTANCE_NAME__ specifies the desired
 ASCII encoded class and instance parts of the ICCCM `WM_CLASS` window property.  Both
 hints need to be set to something other than an empty string for them to take effect.
 These are set with @ref glfwWindowHintString.
-
-#### Wayland specific window hints {#window_hints_wayland}
-
-@anchor GLFW_WAYLAND_APP_ID_hint
-__GLFW_WAYLAND_APP_ID__ specifies the Wayland app_id for a window, used
-by window managers to identify types of windows. This is set with
-@ref glfwWindowHintString.
 
 
 #### Supported and default values {#window_hints_values}
@@ -576,9 +577,9 @@ GLFW_WIN32_KEYBOARD_MENU      | `GLFW_FALSE`                | `GLFW_TRUE` or `GL
 GLFW_WIN32_SHOWDEFAULT        | `GLFW_FALSE`                | `GLFW_TRUE` or `GLFW_FALSE`
 GLFW_COCOA_FRAME_NAME         | `""`                        | A UTF-8 encoded frame autosave name
 GLFW_COCOA_GRAPHICS_SWITCHING | `GLFW_FALSE`                | `GLFW_TRUE` or `GLFW_FALSE`
+GLFW_WAYLAND_APP_ID           | `""`                        | An ASCII encoded Wayland `app_id` name
 GLFW_X11_CLASS_NAME           | `""`                        | An ASCII encoded `WM_CLASS` class name
 GLFW_X11_INSTANCE_NAME        | `""`                        | An ASCII encoded `WM_CLASS` instance name
-GLFW_WAYLAND_APP_ID           | `""`                        | An ASCII encoded Wayland `app_id` name
 
 
 ## Window event processing {#window_events}
@@ -897,7 +898,7 @@ glfwGetWindowPos(window, &xpos, &ypos);
 
 All GLFW windows have a title, although undecorated or full screen windows may
 not display it or only display it in a task bar or similar interface.  You can
-set a UTF-8 encoded window title with @ref glfwSetWindowTitle.
+set a new UTF-8 encoded window title with @ref glfwSetWindowTitle.
 
 ```c
 glfwSetWindowTitle(window, "My Window");
@@ -919,6 +920,11 @@ If you are using C++11 or C11, you can use a UTF-8 string literal.
 glfwSetWindowTitle(window, u8"This is always a UTF-8 string");
 ```
 
+The current window title can be queried with @ref glfwGetWindowTitle.
+
+```c
+const char* title = glfwGetWindowTitle(window);
+```
 
 ### Window icon {#window_icon}
 

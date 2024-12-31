@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 Wayland - www.glfw.org
+// GLFW 3.5 Wayland - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
 //
@@ -822,8 +822,7 @@ static GLFWbool createLibdecorFrame(_GLFWwindow* window)
     if (strlen(window->wl.appId))
         libdecor_frame_set_app_id(window->wl.libdecor.frame, window->wl.appId);
 
-    if (strlen(window->wl.title))
-        libdecor_frame_set_title(window->wl.libdecor.frame, window->wl.title);
+    libdecor_frame_set_title(window->wl.libdecor.frame, window->title);
 
     if (window->minwidth != GLFW_DONT_CARE &&
         window->minheight != GLFW_DONT_CARE)
@@ -939,8 +938,7 @@ static GLFWbool createXdgShellObjects(_GLFWwindow* window)
     if (window->wl.appId)
         xdg_toplevel_set_app_id(window->wl.xdg.toplevel, window->wl.appId);
 
-    if (window->wl.title)
-        xdg_toplevel_set_title(window->wl.xdg.toplevel, window->wl.title);
+    xdg_toplevel_set_title(window->wl.xdg.toplevel, window->title);
 
     if (window->monitor)
     {
@@ -1040,7 +1038,6 @@ static GLFWbool createNativeSurface(_GLFWwindow* window,
     window->wl.height = wndconfig->height;
     window->wl.fbWidth = wndconfig->width;
     window->wl.fbHeight = wndconfig->height;
-    window->wl.title = _glfw_strdup(wndconfig->title);
     window->wl.appId = _glfw_strdup(wndconfig->wl.appId);
 
     window->wl.bufferScale = 1;
@@ -1195,8 +1192,8 @@ static void inputText(_GLFWwindow* window, uint32_t scancode)
     if (xkb_state_key_get_syms(_glfw.wl.xkb.state, keycode, &keysyms) == 1)
     {
         const xkb_keysym_t keysym = composeSymbol(keysyms[0]);
-        const uint32_t codepoint = _glfwKeySym2Unicode(keysym);
-        if (codepoint != GLFW_INVALID_CODEPOINT)
+        const uint32_t codepoint = xkb_keysym_to_utf32(keysym);
+        if (codepoint != 0)
         {
             const int mods = _glfw.wl.xkb.modifiers;
             const int plain = !(mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT));
@@ -1977,41 +1974,41 @@ static void dataDeviceHandleEnter(void* userData,
         _glfw.wl.dragFocus = NULL;
     }
 
-    for (unsigned int i = 0; i < _glfw.wl.offerCount; i++)
+    unsigned int i;
+
+    for (i = 0; i < _glfw.wl.offerCount; i++)
     {
         if (_glfw.wl.offers[i].offer == offer)
+            break;
+    }
+
+    if (i == _glfw.wl.offerCount)
+        return;
+
+    if (surface && wl_proxy_get_tag((struct wl_proxy*) surface) == &_glfw.wl.tag)
+    {
+        _GLFWwindow* window = wl_surface_get_user_data(surface);
+        if (window->wl.surface == surface)
         {
-            _GLFWwindow* window = NULL;
-
-            if (surface)
-            {
-                if (wl_proxy_get_tag((struct wl_proxy*) surface) == &_glfw.wl.tag)
-                    window = wl_surface_get_user_data(surface);
-            }
-
-            if (surface == window->wl.surface && _glfw.wl.offers[i].text_uri_list)
+            if (_glfw.wl.offers[i].text_uri_list)
             {
                 _glfw.wl.dragOffer = offer;
                 _glfw.wl.dragFocus = window;
                 _glfw.wl.dragSerial = serial;
-            }
 
-            _glfw.wl.offers[i] = _glfw.wl.offers[_glfw.wl.offerCount - 1];
-            _glfw.wl.offerCount--;
-            break;
+                wl_data_offer_accept(offer, serial, "text/uri-list");
+            }
         }
     }
 
-    if (wl_proxy_get_tag((struct wl_proxy*) surface) != &_glfw.wl.tag)
-        return;
-
-    if (_glfw.wl.dragOffer)
-        wl_data_offer_accept(offer, serial, "text/uri-list");
-    else
+    if (!_glfw.wl.dragOffer)
     {
         wl_data_offer_accept(offer, serial, NULL);
         wl_data_offer_destroy(offer);
     }
+
+    _glfw.wl.offers[i] = _glfw.wl.offers[_glfw.wl.offerCount - 1];
+    _glfw.wl.offerCount--;
 }
 
 static void dataDeviceHandleLeave(void* userData,
@@ -2045,15 +2042,17 @@ static void dataDeviceHandleDrop(void* userData,
         int count;
         char** paths = _glfwParseUriList(string, &count);
         if (paths)
+        {
             _glfwInputDrop(_glfw.wl.dragFocus, count, (const char**) paths);
 
-        for (int i = 0; i < count; i++)
-            _glfw_free(paths[i]);
+            for (int i = 0; i < count; i++)
+                _glfw_free(paths[i]);
 
-        _glfw_free(paths);
+            _glfw_free(paths);
+        }
+
+        _glfw_free(string);
     }
-
-    _glfw_free(string);
 }
 
 static void dataDeviceHandleSelection(void* userData,
@@ -2186,6 +2185,12 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
     if (window == _glfw.wl.keyboardFocus)
         _glfw.wl.keyboardFocus = NULL;
 
+    if (window->wl.fractionalScale)
+        wp_fractional_scale_v1_destroy(window->wl.fractionalScale);
+
+    if (window->wl.scalingViewport)
+        wp_viewport_destroy(window->wl.scalingViewport);
+
     if (window->wl.activationToken)
         xdg_activation_token_v1_destroy(window->wl.activationToken);
 
@@ -2215,17 +2220,12 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
     if (window->wl.surface)
         wl_surface_destroy(window->wl.surface);
 
-    _glfw_free(window->wl.title);
     _glfw_free(window->wl.appId);
     _glfw_free(window->wl.outputScales);
 }
 
 void _glfwSetWindowTitleWayland(_GLFWwindow* window, const char* title)
 {
-    char* copy = _glfw_strdup(title);
-    _glfw_free(window->wl.title);
-    window->wl.title = copy;
-
     if (window->wl.libdecor.frame)
         libdecor_frame_set_title(window->wl.libdecor.frame, title);
     else if (window->wl.xdg.toplevel)
@@ -2721,23 +2721,23 @@ const char* _glfwGetScancodeNameWayland(int scancode)
         return NULL;
     }
 
-    const uint32_t codepoint = _glfwKeySym2Unicode(keysyms[0]);
-    if (codepoint == GLFW_INVALID_CODEPOINT)
+    // WORKAROUND: xkb_keysym_to_utf8() requires the third parameter (size of the output buffer)
+    // to be at least 7 (6 bytes + a null terminator), because it was written when UTF-8
+    // sequences could be up to 6 bytes long. The _glfw.wl.keynames buffers are only 5 bytes
+    // long, because UTF-8 sequences are now limited to 4 bytes and no codepoints were ever assigned
+    // that needed more than that. To work around this, we first copy to a temporary buffer.
+    //
+    // See: https://github.com/xkbcommon/libxkbcommon/issues/418
+    char temp_buffer[7];
+    const int bytes_written = xkb_keysym_to_utf8(keysyms[0], temp_buffer, sizeof(temp_buffer));
+    if (bytes_written <= 0 || bytes_written > 5)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Wayland: Failed to retrieve codepoint for key name");
+                        "Wayland: Failed to encode keysym as UTF-8");
         return NULL;
     }
+    memcpy(_glfw.wl.keynames[key], temp_buffer, bytes_written);
 
-    const size_t count = _glfwEncodeUTF8(_glfw.wl.keynames[key],  codepoint);
-    if (count == 0)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Wayland: Failed to encode codepoint for key name");
-        return NULL;
-    }
-
-    _glfw.wl.keynames[key][count] = '\0';
     return _glfw.wl.keynames[key];
 }
 
@@ -3299,7 +3299,6 @@ GLFWAPI struct wl_display* glfwGetWaylandDisplay(void)
 
 GLFWAPI struct wl_surface* glfwGetWaylandWindow(GLFWwindow* handle)
 {
-    _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
 
     if (_glfw.platform.platformID != GLFW_PLATFORM_WAYLAND)
@@ -3308,6 +3307,9 @@ GLFWAPI struct wl_surface* glfwGetWaylandWindow(GLFWwindow* handle)
                         "Wayland: Platform not initialized");
         return NULL;
     }
+
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
 
     return window->wl.surface;
 }
