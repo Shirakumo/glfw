@@ -1,5 +1,4 @@
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-
 UNAME_M := $(shell uname -m)
 UNAME_S := $(shell uname -s)
 
@@ -31,44 +30,39 @@ else
 endif
 endif
 
-# Setup extension and flags
+EXT = so
+CMAKE ?= cmake
+PREFIX ?= build
+BUILD_TYPE ?= ReleaseWithDebug
+CMAKEFLAGS ?= -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
+
 ifeq ($(OS),win)
 	CMAKEFLAGS += -G "MSYS Makefiles"
-	EXT ?= dll
+	EXT = dll
 else ifeq ($(OS),mac)
-	EXT ?= dylib
+	EXT = dylib
 else ifeq ($(OS),lin)
-	ifeq ($(ARCH),amd64)
-		CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.9_x64.h"
-	else ifeq ($(ARCH),i686)
-		CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.9_x86.h"
-	endif
+ifeq ($(ARCH),amd64)
+	NATIVE_CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.20_x64.h" -pthread
+else ifeq ($(ARCH),i686)
+	NATIVE_CFLAGS += -static-libgcc -include "$(ROOT_DIR)/glibcver/glibc_2.20_x86.h" -pthread
+endif
 	CMAKEFLAGS += -DGLFW_BUILD_WAYLAND=1 -DGLFW_BUILD_X11=1
-	EXT ?= so
-else
-	EXT ?= so
 endif
-
-# Set up cross-compilation
-ifeq ($(OS),win)
-	ifeq ($(UNAME_S),Linux)
-		ifeq ($(ARCH),amd64)
-			CMAKEFLAGS = -DCMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake
-		else ifeq ($(ARCH),i686)
-			CMAKEFLAGS = -DCMAKE_TOOLCHAIN_FILE=CMake/i686-w64-mingw32.cmake
-		else
-			$(error "Can't cross-compile from $(UNAME_S) to $(OS)/$(ARCH)")
-		endif
-	else
-		$(error "Can't cross-compile from $(UNAME_S) to $(OS)/$(ARCH)")
-	endif
-endif
-
 BUILDDIR ?= build-$(OS)-$(ARCH)
 
-all:
+native:
+	$(MAKE) build CFLAGS="${NATIVE_CFLAGS}"
+
+win-amd64:
+	$(MAKE) build OS=win ARCH=amd64 CMAKEFLAGS="${CMAKEFLAGS} -DCMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake"
+
+win-i686:
+	$(MAKE) build OS=win ARCH=i686 CMAKEFLAGS="${CMAKEFLAGS} -DCMAKE_TOOLCHAIN_FILE=CMake/i686-w64-mingw32.cmake"
+
+build:
 	mkdir -p $(BUILDDIR) ../static
-	cmake -B $(BUILDDIR)/ -DCMAKE_BUILD_TYPE=ReleaseWithDebug -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_C_FLAGS="$(CFLAGS)" $(CMAKEFLAGS)
+	cmake -B $(BUILDDIR)/ -DCMAKE_C_FLAGS="$(CFLAGS)" $(CMAKEFLAGS)
 	$(MAKE) -C $(BUILDDIR)
 	@if [ "${OS}" = "win" ]; then \
 		cp $(BUILDDIR)/src/glfw3.$(EXT) ../static/libglfw-$(OS)-$(ARCH).$(EXT); \
