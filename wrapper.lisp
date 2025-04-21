@@ -56,6 +56,8 @@
           do (with-simple-restart (continue "Ignore the init hint.")
                (glfw init-hint k (flag-value v))))
     (glfw init)
+    ;; KLUDGE: some stuff like Nvidia NSight clobbers signals after loading their GL libs. restore them here.
+    #+(and unix sbcl) (cffi:foreign-funcall "restore_sbcl_signals" :void)
     (list-monitors :refresh T)
     (setf *initialized* T)))
 
