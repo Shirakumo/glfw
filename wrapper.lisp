@@ -592,11 +592,19 @@
   (glfw set-input-mode (pointer window) mode (flag-value value))
   value)
 
+(declaim (inline poll-events))
 (defun poll-events (&key (timeout NIL))
   (etypecase timeout
-    (null (glfw poll-events))
-    ((eql T) (glfw wait-events))
-    (real (glfw wait-events-timeout (float timeout 0d0)))))
+    (null (glfw:poll-events))
+    ((eql T) (glfw:wait-events))
+    (real (glfw:wait-events-timeout (float timeout 0d0))))
+  (cffi:with-foreign-objects ((str :pointer) (str-address :pointer))
+    (setf (cffi:mem-aref str-address :pointer) str)
+    (let ((code (glfw:get-error str-address)))
+      (unless (eql :no-error code)
+        (error 'glfw-error :operation 'poll-events :code code :message
+               (cffi:foreign-string-to-lisp
+                (cffi:mem-aref str-address :pointer) :encoding :utf-8))))))
 
 (defmethod key-state (key (window window))
   (glfw get-key (pointer window) key))

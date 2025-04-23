@@ -524,7 +524,10 @@
                (write-char (char-upcase char) out)))))
 
 (defmacro defglfwfun (name return args)
-  `(cffi:defcfun (,(intern (translate-name (subseq name (length "glfw")))) ,name) ,return ,@args))
+  (let ((fun (intern (translate-name (subseq name (length "glfw"))))))
+    `(progn
+       (declaim (inline ,fun))
+       (cffi:defcfun (,fun ,name) ,return ,@args))))
 
 (defglfwfun "glfwInit" :bool ())
 (defglfwfun "glfwTerminate" :void ())
